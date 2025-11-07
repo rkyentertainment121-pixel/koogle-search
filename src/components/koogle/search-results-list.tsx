@@ -83,7 +83,7 @@ export default function SearchResultsList() {
                 );
                 setResults(filteredResults);
             } else {
-                setResults([]);
+                setResults(mockSearchResults);
             }
             setLoading(false);
         }, 1000);
