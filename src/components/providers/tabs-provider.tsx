@@ -62,37 +62,41 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
     const newTab: Tab = {
       id: createUniqueId(),
       url: url,
-      title: title || (url === 'koogle:newtab' ? 'New Tab' : (url.startsWith('koogle:search') ? url.split('?q=')[1] : url)),
+      title: title || (url === 'koogle:newtab' ? 'New Tab' : (url.startsWith('koogle:search') ? decodeURIComponent(url.split('?q=')[1]) : url)),
     };
     
-    const activeTab = tabs.find(t => t.id === activeTabId);
-    if (activeTab && activeTab.url === 'koogle:newtab') {
-      // If the current tab is a blank "New Tab", replace it instead of adding a new one.
-      setTabs(prevTabs => prevTabs.map(t => t.id === activeTabId ? newTab : t));
-    } else {
-      setTabs(prevTabs => [...prevTabs, newTab]);
-    }
+    setTabs(prevTabs => {
+      const activeTab = prevTabs.find(t => t.id === activeTabId);
+      if (activeTab && activeTab.url === 'koogle:newtab') {
+        // If the current tab is a blank "New Tab", replace it instead of adding a new one.
+        return prevTabs.map(t => t.id === activeTabId ? newTab : t);
+      }
+      return [...prevTabs, newTab];
+    });
+
     setActiveTabId(newTab.id);
   };
 
   const closeTab = (tabId: string) => {
-    const tabIndex = tabs.findIndex(tab => tab.id === tabId);
-    if (tabIndex === -1) return;
+    setTabs(prevTabs => {
+      const tabIndex = prevTabs.findIndex(tab => tab.id === tabId);
+      if (tabIndex === -1) return prevTabs;
 
-    const newTabs = tabs.filter(tab => tab.id !== tabId);
-    setTabs(newTabs);
-
-    if (activeTabId === tabId) {
-      if (newTabs.length > 0) {
-        const newActiveIndex = Math.max(0, tabIndex - 1);
-        setActiveTabId(newTabs[newActiveIndex].id);
-      } else {
-        // If all tabs are closed, create a new one.
-        const homeTab = createNewTab();
-        setTabs([homeTab]);
-        setActiveTabId(homeTab.id);
+      const newTabs = prevTabs.filter(tab => tab.id !== tabId);
+      
+      if (activeTabId === tabId) {
+        if (newTabs.length > 0) {
+          const newActiveIndex = Math.max(0, tabIndex - 1);
+          setActiveTabId(newTabs[newActiveIndex].id);
+        } else {
+          // If all tabs are closed, create a new one.
+          const homeTab = createNewTab();
+          setActiveTabId(homeTab.id);
+          return [homeTab];
+        }
       }
-    }
+      return newTabs;
+    });
   };
 
   const setActiveTab = (tabId: string) => {
