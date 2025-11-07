@@ -179,15 +179,14 @@ export default function SearchBar({ initialQuery = '', showProgressBar = false }
 
     const engineData = searchEngines.find(e => e.name === engineName);
     
-    let url;
     if (engineData && engineData.url) {
-      url = engineData.url + encodeURIComponent(searchQuery.trim());
+      const url = engineData.url + encodeURIComponent(searchQuery.trim());
+      window.open(url, '_blank');
     } else {
       // Koogle search
-      url = `koogle:search?q=${encodeURIComponent(searchQuery.trim())}`;
+      const url = `koogle:search?q=${encodeURIComponent(searchQuery.trim())}`;
+      addTab(url, searchQuery);
     }
-    
-    addTab(url, searchQuery);
   };
 
   const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
