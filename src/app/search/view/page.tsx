@@ -58,17 +58,19 @@ export default function ViewPage() {
 
   const isNewTab = currentUrl === 'koogle:newtab';
   const isSearch = currentUrl?.startsWith('koogle:search?q=');
-  const query = isSearch ? decodeURIComponent(currentUrl.split('?q=')[1]) : '';
+  const query = isSearch ? decodeURIComponent(currentUrl.split('?q=')[1] || '') : '';
 
   if (isNewTab) {
     return (
         <div className="flex flex-col min-h-screen">
             <main className="flex-1 flex flex-col items-center justify-center p-4 md:p-8">
-                <div className="w-full max-w-2xl flex flex-col items-center gap-8">
+                <div className="w-full flex flex-col items-center gap-8">
                 <h1 className="text-5xl md:text-7xl font-bold font-headline text-center tracking-tighter">
                     Koogle Search
                 </h1>
-                <SearchBar />
+                <div className="w-full max-w-2xl">
+                  <SearchBar />
+                </div>
                 <ShortcutGrid />
                 </div>
             </main>
@@ -86,9 +88,9 @@ export default function ViewPage() {
             </Suspense>
             <div>
                 <Suspense fallback={
-                    <div className="space-y-4 pt-4 px-4 md:px-6">
+                    <div className="space-y-4 pt-4">
                         {Array.from({ length: 5 }).map((_, i) => (
-                            <div key={i} className="flex flex-col space-y-3">
+                            <div key={i} className="flex flex-col space-y-3 px-4 md:px-6">
                                 <Skeleton className="h-4 w-48" />
                                 <Skeleton className="h-5 w-80" />
                                 <Skeleton className="h-4 w-full" />
