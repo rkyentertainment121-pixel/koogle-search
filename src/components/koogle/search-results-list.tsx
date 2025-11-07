@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { SearchResult } from "@/lib/types";
 import { Bookmark, ExternalLink } from "lucide-react";
 import { getSearchResults } from "@/lib/actions";
+import Link from "next/link";
 
 function SearchResultsSkeleton() {
     return (
@@ -41,9 +42,9 @@ const SearchResultItem = ({ result }: { result: SearchResult }) => {
                         />
                         <span className="truncate">{domain}</span>
                     </div>
-                    <a href={result.url} target="_blank" rel="noopener noreferrer" className="block">
+                    <Link href={`/search/view?url=${encodeURIComponent(result.url)}`} className="block">
                         <h3 className="text-xl font-semibold text-primary-foreground font-headline text-blue-700 dark:text-blue-400 hover:underline">{result.title}</h3>
-                    </a>
+                    </Link>
                     <p className="mt-2 text-muted-foreground">{result.description}</p>
                 </div>
                 <div className="flex flex-col gap-2">
