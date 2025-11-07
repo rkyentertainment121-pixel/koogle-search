@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useSearchParams } from 'next/navigation';
@@ -47,7 +48,7 @@ export default function ViewPage() {
 
   useEffect(() => {
     setCurrentUrl(activeTab?.url);
-  }, [activeTab?.url]);
+  }, [activeTab]);
 
 
   const handleTitleLoad = (title: string) => {
@@ -79,8 +80,8 @@ export default function ViewPage() {
 
   if (isSearch) {
     return (
-       <main className="flex-1 p-4 md:p-6 overflow-y-auto w-full">
-        <div className="max-w-full mx-auto">
+       <main className="flex-1 overflow-y-auto w-full">
+        <div className="mx-auto px-4 md:px-6">
             <Suspense fallback={<Skeleton className="h-20 w-full" />}>
               <SearchBar initialQuery={query} showProgressBar={true} />
             </Suspense>
