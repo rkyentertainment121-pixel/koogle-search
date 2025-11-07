@@ -2,6 +2,7 @@
 'use client';
 
 import React, { createContext, useState, ReactNode, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import type { Tab } from '@/lib/types';
 
 interface TabsContextType {
@@ -33,6 +34,7 @@ const createNewTab = (): Tab => ({
 export const TabsProvider = ({ children }: { children: ReactNode }) => {
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
+  const router = useRouter();
   const isInitialMount = useRef(true);
 
   useEffect(() => {
@@ -54,7 +56,8 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
       title: title || (url === 'koogle:newtab' ? 'New Tab' : (url.startsWith('koogle:search') ? decodeURIComponent(url.split('?q=')[1]) : url)),
     };
 
-    setTabs(prevTabs => [...prevTabs, newTab]);
+    const newTabs = [...tabs, newTab];
+    setTabs(newTabs);
     setActiveTabId(newTab.id);
   };
 
@@ -112,3 +115,4 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
 
   return <TabsContext.Provider value={value}>{children}</TabsContext.Provider>;
 };
+
