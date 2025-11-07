@@ -1,37 +1,68 @@
-"use client";
+'use client';
 
-import { Mic, Search, X, Loader2 } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import React, { useState, useEffect, useCallback, useRef } from "react";
-import { useDebounce } from "@/hooks/use-debounce";
-import { getSuggestions } from "@/lib/actions";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { SearchEngine } from "@/lib/types";
-import { Progress } from "@/components/ui/progress";
+import { Mic, Search, X, Loader2 } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useDebounce } from '@/hooks/use-debounce';
+import { getSuggestions } from '@/lib/actions';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import type { SearchEngine } from '@/lib/types';
+import { Progress } from '@/components/ui/progress';
 
-const searchEngines: { name: SearchEngine, label: string; url: string; queryParam: string }[] = [
-    { name: "koogle", label: "Koogle", url: "/search", queryParam: "q" },
-    { name: "google", label: "Google", url: "/search", queryParam: "q" },
-    { name: "bing", label: "Bing", url: "/search", queryParam: "q" },
-    { name: "yahoo", label: "Yahoo", url: "/search", queryParam: "q" },
-    { name: "duckduckgo", label: "DuckDuckGo", url: "/search", queryParam: "q" },
+const searchEngines: {
+  name: SearchEngine;
+  label: string;
+  url: string;
+  queryParam: string;
+}[] = [
+  { name: 'koogle', label: 'Koogle', url: '/search', queryParam: 'q' },
+  {
+    name: 'google',
+    label: 'Google',
+    url: 'https://www.google.com/search',
+    queryParam: 'q',
+  },
+  {
+    name: 'bing',
+    label: 'Bing',
+    url: 'https://www.bing.com/search',
+    queryParam: 'q',
+  },
+  {
+    name: 'yahoo',
+    label: 'Yahoo',
+    url: 'https://search.yahoo.com/search',
+    queryParam: 'p',
+  },
+  {
+    name: 'duckduckgo',
+    label: 'DuckDuckGo',
+    url: 'https://duckduckgo.com/',
+    queryParam: 'q',
+  },
 ];
 
 type SearchBarProps = {
-    showProgressBar?: boolean;
-}
+  showProgressBar?: boolean;
+};
 
 export default function SearchBar({ showProgressBar = false }: SearchBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [query, setQuery] = useState(searchParams.get("q") || "");
-  const [selectedEngine, setSelectedEngine] = useState<SearchEngine>("koogle");
+  const [query, setQuery] = useState(searchParams.get('q') || '');
+  const [selectedEngine, setSelectedEngine] = useState<SearchEngine>('koogle');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isSuggestionsVisible, setSuggestionsVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -39,52 +70,52 @@ export default function SearchBar({ showProgressBar = false }: SearchBarProps) {
   const debouncedQuery = useDebounce(query, 300);
   const searchBarRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-  
+
   const speechRecognitionRef = useRef<any>(null);
 
   const [isSearching, setIsSearching] = useState(false);
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    const savedEngine = localStorage.getItem("searchEngine") as SearchEngine;
-    if (savedEngine && searchEngines.some(e => e.name === savedEngine)) {
+    const savedEngine = localStorage.getItem('searchEngine') as SearchEngine;
+    if (savedEngine && searchEngines.some((e) => e.name === savedEngine)) {
       setSelectedEngine(savedEngine);
     }
   }, []);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (SpeechRecognition) {
-            speechRecognitionRef.current = new SpeechRecognition();
-            const recognition = speechRecognitionRef.current;
-            recognition.continuous = false;
-            recognition.lang = 'en-US';
-            recognition.interimResults = false;
-            recognition.maxAlternatives = 1;
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        speechRecognitionRef.current = new SpeechRecognition();
+        const recognition = speechRecognitionRef.current;
+        recognition.continuous = false;
+        recognition.lang = 'en-US';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
 
-            recognition.onresult = (event: any) => {
-                const speechResult = event.results[0][0].transcript;
-                setQuery(speechResult);
-                handleSearch(speechResult);
-            };
-            
-            recognition.onerror = (event: any) => {
-                toast({
-                    variant: "destructive",
-                    title: "Voice Search Error",
-                    description: `Error occurred in recognition: ${event.error}`,
-                });
-                setIsListening(false);
-            };
+        recognition.onresult = (event: any) => {
+          const speechResult = event.results[0][0].transcript;
+          setQuery(speechResult);
+          handleSearch(speechResult, selectedEngine);
+        };
 
-            recognition.onend = () => {
-                setIsListening(false);
-            };
-        }
+        recognition.onerror = (event: any) => {
+          toast({
+            variant: 'destructive',
+            title: 'Voice Search Error',
+            description: `Error occurred in recognition: ${event.error}`,
+          });
+          setIsListening(false);
+        };
+
+        recognition.onend = () => {
+          setIsListening(false);
+        };
+      }
     }
-  }, [toast]);
-
+  }, [toast, selectedEngine]);
 
   const fetchSuggestions = useCallback(async (searchQuery: string) => {
     if (searchQuery.length > 1) {
@@ -107,104 +138,118 @@ export default function SearchBar({ showProgressBar = false }: SearchBarProps) {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (searchBarRef.current && !searchBarRef.current.contains(event.target as Node)) {
+      if (
+        searchBarRef.current &&
+        !searchBarRef.current.contains(event.target as Node)
+      ) {
         setSuggestionsVisible(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
 
   useEffect(() => {
-    if(showProgressBar) {
-        // This is a bit of a hack to simulate the search progress
-        // based on router events. A better implementation would involve
-        // a shared state between the search bar and the search results.
-        const queryParam = searchParams.get('q');
-        if (queryParam) {
-            setIsSearching(true);
-            setProgress(0);
-            const interval = setInterval(() => {
-                setProgress(prev => {
-                    if (prev >= 95) {
-                        clearInterval(interval);
-                        return prev;
-                    }
-                    return prev + 5;
-                });
-            }, 200);
-
-            // This is a proxy for when the search results have loaded.
-            const timer = setTimeout(() => {
-                 setIsSearching(false);
-                 setProgress(100);
-                 clearInterval(interval);
-            }, 4000); 
-
-            return () => {
-                clearInterval(interval);
-                clearTimeout(timer);
+    if (showProgressBar) {
+      // This is a bit of a hack to simulate the search progress
+      // based on router events. A better implementation would involve
+      // a shared state between the search bar and the search results.
+      const queryParam = searchParams.get('q');
+      if (queryParam) {
+        setIsSearching(true);
+        setProgress(0);
+        const interval = setInterval(() => {
+          setProgress((prev) => {
+            if (prev >= 95) {
+              clearInterval(interval);
+              return prev;
             }
-        }
+            return prev + 5;
+          });
+        }, 200);
+
+        // This is a proxy for when the search results have loaded.
+        const timer = setTimeout(() => {
+          setIsSearching(false);
+          setProgress(100);
+          clearInterval(interval);
+        }, 4000);
+
+        return () => {
+          clearInterval(interval);
+          clearTimeout(timer);
+        };
+      }
     }
   }, [searchParams, showProgressBar]);
 
-
   const handleEngineChange = (engine: SearchEngine) => {
     setSelectedEngine(engine);
-    localStorage.setItem("searchEngine", engine);
+    localStorage.setItem('searchEngine', engine);
     setSuggestionsVisible(false);
   };
 
-  const handleSearch = (searchQuery: string) => {
-    if (searchQuery.trim() !== "") {
+  const handleSearch = (searchQuery: string, engineName: SearchEngine) => {
+    if (searchQuery.trim() === '') return;
+
+    const engine = searchEngines.find((e) => e.name === engineName);
+    if (!engine) return;
+
+    setSuggestionsVisible(false);
+
+    if (engine.name === 'koogle') {
       setIsSearching(true);
       setProgress(0);
-      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-      setSuggestionsVisible(false);
+      router.push(`${engine.url}?${engine.queryParam}=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      window.open(
+        `${engine.url}?${engine.queryParam}=${encodeURIComponent(searchQuery.trim())}`,
+        '_blank'
+      );
     }
   };
 
   const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    handleSearch(query);
-  };
-  
-  const handleVoiceSearch = () => {
-    if (speechRecognitionRef.current) {
-        if (!isListening) {
-            speechRecognitionRef.current.start();
-            setIsListening(true);
-        } else {
-            speechRecognitionRef.current.stop();
-            setIsListening(false);
-        }
-    } else {
-        toast({
-            variant: "destructive",
-            title: "Browser not supported",
-            description: "Your browser does not support voice recognition.",
-        });
-    }
+    handleSearch(query, selectedEngine);
   };
 
+  const handleVoiceSearch = () => {
+    if (speechRecognitionRef.current) {
+      if (!isListening) {
+        speechRecognitionRef.current.start();
+        setIsListening(true);
+      } else {
+        speechRecognitionRef.current.stop();
+        setIsListening(false);
+      }
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Browser not supported',
+        description: 'Your browser does not support voice recognition.',
+      });
+    }
+  };
 
   return (
     <div className="w-full relative" ref={searchBarRef}>
       <form onSubmit={handleFormSubmit} className="relative">
         <div className="relative flex items-center">
-        <Select value={selectedEngine} onValueChange={handleEngineChange}>
+          <Select value={selectedEngine} onValueChange={handleEngineChange}>
             <SelectTrigger className="absolute left-3 h-10 w-28 rounded-full border-none bg-muted focus:ring-0 focus:ring-offset-0">
-                <SelectValue placeholder="Engine" />
+              <SelectValue placeholder="Engine" />
             </SelectTrigger>
             <SelectContent>
-                {searchEngines.map(engine => (
-                    <SelectItem key={engine.name} value={engine.name}>{engine.label}</SelectItem>
-                ))}
+              {searchEngines.map((engine) => (
+                <SelectItem key={engine.name} value={engine.name}>
+                  {engine.label}
+                </SelectItem>
+              ))}
             </SelectContent>
-        </Select>
+          </Select>
 
           <Input
             type="search"
@@ -221,12 +266,18 @@ export default function SearchBar({ showProgressBar = false }: SearchBarProps) {
                 variant="ghost"
                 size="icon"
                 className="h-9 w-9 rounded-full"
-                onClick={() => setQuery("")}
+                onClick={() => setQuery('')}
               >
                 <X className="h-5 w-5" />
               </Button>
             )}
-            <Button type="button" variant={isListening ? 'destructive' : 'ghost'} size="icon" className="h-9 w-9 rounded-full" onClick={handleVoiceSearch}>
+            <Button
+              type="button"
+              variant={isListening ? 'destructive' : 'ghost'}
+              size="icon"
+              className="h-9 w-9 rounded-full"
+              onClick={handleVoiceSearch}
+            >
               <Mic className="h-5 w-5" />
             </Button>
           </div>
@@ -249,7 +300,7 @@ export default function SearchBar({ showProgressBar = false }: SearchBarProps) {
                       className="w-full justify-start h-auto py-2 px-3 text-base"
                       onClick={() => {
                         setQuery(suggestion);
-                        handleSearch(suggestion);
+                        handleSearch(suggestion, selectedEngine);
                       }}
                     >
                       <Search className="h-4 w-4 mr-3 text-muted-foreground" />
@@ -259,19 +310,25 @@ export default function SearchBar({ showProgressBar = false }: SearchBarProps) {
                 ))}
               </ul>
             )}
-            {!isLoading && debouncedQuery.length > 1 && suggestions.length === 0 && (
-                 <div className="text-center text-sm text-muted-foreground p-4">No suggestions found.</div>
-            )}
+            {!isLoading &&
+              debouncedQuery.length > 1 &&
+              suggestions.length === 0 && (
+                <div className="text-center text-sm text-muted-foreground p-4">
+                  No suggestions found.
+                </div>
+              )}
           </CardContent>
         </Card>
       )}
 
-       {showProgressBar && isSearching && <Progress value={progress} className="w-full mt-2 h-1" />}
+      {showProgressBar && isSearching && (
+        <Progress value={progress} className="w-full mt-2 h-1" />
+      )}
 
       {!showProgressBar && (
         <div className="flex items-center space-x-2 mt-4 justify-center">
-            <Switch id="private-search" />
-            <Label htmlFor="private-search">Private Search</Label>
+          <Switch id="private-search" />
+          <Label htmlFor="private-search">Private Search</Label>
         </div>
       )}
     </div>
