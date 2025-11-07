@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm">
-      <div className="container flex h-14 items-center">
+      <div className="flex h-14 items-center px-4">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon">
             <Menu className="h-5 w-5" />
