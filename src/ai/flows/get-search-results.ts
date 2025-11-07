@@ -10,9 +10,11 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import type { SearchEngine } from '@/lib/types';
 
 const SearchResultInputSchema = z.object({
   query: z.string().describe('The search query.'),
+  searchEngine: z.custom<SearchEngine>().describe('The search engine to use.'),
 });
 export type SearchResultInput = z.infer<typeof SearchResultInputSchema>;
 
@@ -44,8 +46,21 @@ const getSearchResultsFlow = ai.defineFlow(
     inputSchema: SearchResultInputSchema,
     outputSchema: SearchResultOutputSchema,
   },
-  async input => {
-    const {output} = await prompt(input);
+  async ({ query, searchEngine }) => {
+    if (searchEngine === 'koogle') {
+      const {output} = await prompt({ query, searchEngine });
+      return output!;
+    }
+
+    // For external search engines, we will just generate dummy data
+    // as we can't reliably scrape them.
+    const { output } = await ai.generate({
+      prompt: `Generate a fake but realistic-looking list of 10 search results for the query "${query}" from the search engine ${searchEngine}. For each result, provide a title, a valid but potentially fake URL, and a concise, plausible-sounding description.`,
+      output: {
+        schema: SearchResultOutputSchema,
+      },
+    });
+    
     return output!;
   }
 );

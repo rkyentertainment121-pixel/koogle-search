@@ -4,10 +4,9 @@ import { useSearchParams } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { SearchResult } from '@/lib/types';
+import type { SearchResult, SearchEngine } from '@/lib/types';
 import { Bookmark, ExternalLink } from 'lucide-react';
 import { getSearchResults } from '@/lib/actions';
-import Link from 'next/link';
 
 function SearchResultsSkeleton() {
   return (
@@ -27,19 +26,27 @@ function SearchResultsSkeleton() {
 }
 
 const SearchResultItem = ({ result }: { result: SearchResult }) => {
-  const domain = new URL(result.url).hostname;
+    let domain = "unknown";
+    try {
+        domain = new URL(result.url).hostname;
+    } catch (e) {
+        console.error("Invalid URL for search result:", result.url);
+    }
+
   return (
     <Card className="p-4 transition-all hover:shadow-md">
       <div className="flex justify-between items-start gap-4">
         <div className="flex-1">
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-            <img
-              src={`https://www.google.com/s2/favicons?sz=16&domain_url=${domain}`}
-              alt={`${domain} favicon`}
-              width={16}
-              height={16}
-              className="rounded"
-            />
+            {domain !== "unknown" && (
+              <img
+                src={`https://www.google.com/s2/favicons?sz=16&domain_url=${domain}`}
+                alt={`${domain} favicon`}
+                width={16}
+                height={16}
+                className="rounded"
+              />
+            )}
             <span className="truncate">{domain}</span>
           </div>
           <a
@@ -68,6 +75,7 @@ const SearchResultItem = ({ result }: { result: SearchResult }) => {
 export default function SearchResultsList() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q');
+  const searchEngine = (searchParams.get('engine') as SearchEngine) || 'koogle';
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalTime, setTotalTime] = useState(0);
@@ -76,7 +84,7 @@ export default function SearchResultsList() {
     if (query) {
       setLoading(true);
       const startTime = performance.now();
-      getSearchResults(query).then((searchResult) => {
+      getSearchResults(query, searchEngine).then((searchResult) => {
         const endTime = performance.now();
         setTotalTime(Number(((endTime - startTime) / 1000).toFixed(2)));
         setResults(searchResult.results);
@@ -86,7 +94,7 @@ export default function SearchResultsList() {
       setResults([]);
       setLoading(false);
     }
-  }, [query]);
+  }, [query, searchEngine]);
 
   if (loading) {
     return <SearchResultsSkeleton />;
@@ -111,7 +119,7 @@ export default function SearchResultsList() {
   return (
     <div className="space-y-6">
       <p className="text-sm text-muted-foreground">
-        About {results.length} results ({totalTime} seconds)
+        About {results.length} results ({totalTime} seconds) on {searchEngine}
       </p>
       {results.map((result, index) => (
         <SearchResultItem key={index} result={result} />

@@ -24,34 +24,12 @@ import { Progress } from '@/components/ui/progress';
 const searchEngines: {
   name: SearchEngine;
   label: string;
-  url: string;
-  queryParam: string;
 }[] = [
-  { name: 'koogle', label: 'Koogle', url: '/search', queryParam: 'q' },
-  {
-    name: 'google',
-    label: 'Google',
-    url: 'https://www.google.com/search',
-    queryParam: 'q',
-  },
-  {
-    name: 'bing',
-    label: 'Bing',
-    url: 'https://www.bing.com/search',
-    queryParam: 'q',
-  },
-  {
-    name: 'yahoo',
-    label: 'Yahoo',
-    url: 'https://search.yahoo.com/search',
-    queryParam: 'p',
-  },
-  {
-    name: 'duckduckgo',
-    label: 'DuckDuckGo',
-    url: 'https://duckduckgo.com/',
-    queryParam: 'q',
-  },
+  { name: 'koogle', label: 'Koogle' },
+  { name: 'google', label: 'Google' },
+  { name: 'bing', label: 'Bing' },
+  { name: 'yahoo', label: 'Yahoo' },
+  { name: 'duckduckgo', label: 'DuckDuckGo' },
 ];
 
 type SearchBarProps = {
@@ -62,7 +40,9 @@ export default function SearchBar({ showProgressBar = false }: SearchBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(searchParams.get('q') || '');
-  const [selectedEngine, setSelectedEngine] = useState<SearchEngine>('koogle');
+  const [selectedEngine, setSelectedEngine] = useState<SearchEngine>(
+    (searchParams.get('engine') as SearchEngine) || 'koogle'
+  );
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isSuggestionsVisible, setSuggestionsVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -153,9 +133,6 @@ export default function SearchBar({ showProgressBar = false }: SearchBarProps) {
 
   useEffect(() => {
     if (showProgressBar) {
-      // This is a bit of a hack to simulate the search progress
-      // based on router events. A better implementation would involve
-      // a shared state between the search bar and the search results.
       const queryParam = searchParams.get('q');
       if (queryParam) {
         setIsSearching(true);
@@ -170,7 +147,6 @@ export default function SearchBar({ showProgressBar = false }: SearchBarProps) {
           });
         }, 200);
 
-        // This is a proxy for when the search results have loaded.
         const timer = setTimeout(() => {
           setIsSearching(false);
           setProgress(100);
@@ -189,26 +165,20 @@ export default function SearchBar({ showProgressBar = false }: SearchBarProps) {
     setSelectedEngine(engine);
     localStorage.setItem('searchEngine', engine);
     setSuggestionsVisible(false);
+    if(query) {
+        handleSearch(query, engine);
+    }
   };
 
   const handleSearch = (searchQuery: string, engineName: SearchEngine) => {
     if (searchQuery.trim() === '') return;
 
-    const engine = searchEngines.find((e) => e.name === engineName);
-    if (!engine) return;
-
     setSuggestionsVisible(false);
+    setIsSearching(true);
+    setProgress(0);
 
-    if (engine.name === 'koogle') {
-      setIsSearching(true);
-      setProgress(0);
-      router.push(`${engine.url}?${engine.queryParam}=${encodeURIComponent(searchQuery.trim())}`);
-    } else {
-      window.open(
-        `${engine.url}?${engine.queryParam}=${encodeURIComponent(searchQuery.trim())}`,
-        '_blank'
-      );
-    }
+    const url = `/search?q=${encodeURIComponent(searchQuery.trim())}&engine=${engineName}`;
+    router.push(url);
   };
 
   const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {

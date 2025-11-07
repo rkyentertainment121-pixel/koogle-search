@@ -2,6 +2,7 @@
 
 import { suggestWebsitesAndQueries } from '@/ai/flows/suggest-websites-and-queries';
 import { getSearchResults as getSearchResultsFlow } from '@/ai/flows/get-search-results';
+import type { SearchEngine } from './types';
 
 export const getSuggestions = async (inputText: string) => {
   if (!inputText) return { suggestions: [] };
@@ -15,10 +16,10 @@ export const getSuggestions = async (inputText: string) => {
   }
 };
 
-export const getSearchResults = async (query: string) => {
+export const getSearchResults = async (query: string, searchEngine: SearchEngine) => {
   if (!query) return { results: [] };
   try {
-    const result = await getSearchResultsFlow({ query });
+    const result = await getSearchResultsFlow({ query, searchEngine });
     return result;
   } catch (error) {
     console.error('Error fetching search results:', error);
