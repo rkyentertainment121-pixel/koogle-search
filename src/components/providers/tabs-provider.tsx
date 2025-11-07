@@ -22,6 +22,12 @@ export const TabsContext = createContext<TabsContextType>({
   updateTabTitle: () => {},
 });
 
+const createNewTab = (): Tab => ({
+  id: `tab-${Date.now()}`,
+  url: 'koogle:newtab',
+  title: 'New Tab',
+});
+
 export const TabsProvider = ({ children }: { children: ReactNode }) => {
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
@@ -32,9 +38,9 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     // Initialize with a single "New Tab"
     if (tabs.length === 0) {
-      const homeTabId = `tab-${Date.now()}`;
-      setTabs([{ id: homeTabId, url: 'koogle:newtab', title: 'New Tab' }]);
-      setActiveTabId(homeTabId);
+      const homeTab = createNewTab();
+      setTabs([homeTab]);
+      setActiveTabId(homeTab.id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -57,7 +63,8 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
         // If all tabs are closed, create a new home tab
         addTab('koogle:newtab');
     }
-  }, [activeTabId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTabId, tabs]);
 
   const addTab = (url: string, title?: string) => {
     const newTab: Tab = {
@@ -71,12 +78,19 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
 
   const closeTab = (tabId: string) => {
     setTabs(prevTabs => {
+      const tabIndex = prevTabs.findIndex(tab => tab.id === tabId);
       const newTabs = prevTabs.filter(tab => tab.id !== tabId);
+
       if (activeTabId === tabId) {
-        if (newTabs.length > 0) {
-          setActiveTabId(newTabs[newTabs.length - 1].id);
+        if (newTabs.length === 0) {
+          const newHomeTab = createNewTab();
+          setTabs([newHomeTab]);
+          setActiveTabId(newHomeTab.id);
+          return [newHomeTab];
         } else {
-          setActiveTabId(null);
+          // set new active tab
+          const newActiveIndex = Math.max(0, tabIndex - 1);
+          setActiveTabId(newTabs[newActiveIndex].id);
         }
       }
       return newTabs;
