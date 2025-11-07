@@ -56,8 +56,7 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
       title: title || (url === 'koogle:newtab' ? 'New Tab' : (url.startsWith('koogle:search') ? decodeURIComponent(url.split('?q=')[1]) : url)),
     };
 
-    const newTabs = [...tabs, newTab];
-    setTabs(newTabs);
+    setTabs(prevTabs => [...prevTabs, newTab]);
     setActiveTabId(newTab.id);
   };
 
@@ -115,4 +114,3 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
 
   return <TabsContext.Provider value={value}>{children}</TabsContext.Provider>;
 };
-
