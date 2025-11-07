@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { SearchEngine } from "@/lib/types";
+import { Progress } from "@/components/ui/progress";
 
 const searchEngines: { name: SearchEngine, label: string; url: string; queryParam: string }[] = [
     { name: "koogle", label: "Koogle", url: "/search", queryParam: "q" },
@@ -22,7 +23,11 @@ const searchEngines: { name: SearchEngine, label: string; url: string; queryPara
     { name: "duckduckgo", label: "DuckDuckGo", url: "/search", queryParam: "q" },
 ];
 
-export default function SearchBar() {
+type SearchBarProps = {
+    showProgressBar?: boolean;
+}
+
+export default function SearchBar({ showProgressBar = false }: SearchBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(searchParams.get("q") || "");
@@ -36,6 +41,9 @@ export default function SearchBar() {
   const { toast } = useToast();
   
   const speechRecognitionRef = useRef<any>(null);
+
+  const [isSearching, setIsSearching] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     const savedEngine = localStorage.getItem("searchEngine") as SearchEngine;
@@ -109,6 +117,41 @@ export default function SearchBar() {
     };
   }, []);
 
+  useEffect(() => {
+    if(showProgressBar) {
+        // This is a bit of a hack to simulate the search progress
+        // based on router events. A better implementation would involve
+        // a shared state between the search bar and the search results.
+        const queryParam = searchParams.get('q');
+        if (queryParam) {
+            setIsSearching(true);
+            setProgress(0);
+            const interval = setInterval(() => {
+                setProgress(prev => {
+                    if (prev >= 95) {
+                        clearInterval(interval);
+                        return prev;
+                    }
+                    return prev + 5;
+                });
+            }, 200);
+
+            // This is a proxy for when the search results have loaded.
+            const timer = setTimeout(() => {
+                 setIsSearching(false);
+                 setProgress(100);
+                 clearInterval(interval);
+            }, 4000); 
+
+            return () => {
+                clearInterval(interval);
+                clearTimeout(timer);
+            }
+        }
+    }
+  }, [searchParams, showProgressBar]);
+
+
   const handleEngineChange = (engine: SearchEngine) => {
     setSelectedEngine(engine);
     localStorage.setItem("searchEngine", engine);
@@ -117,6 +160,8 @@ export default function SearchBar() {
 
   const handleSearch = (searchQuery: string) => {
     if (searchQuery.trim() !== "") {
+      setIsSearching(true);
+      setProgress(0);
       router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
       setSuggestionsVisible(false);
     }
@@ -220,10 +265,15 @@ export default function SearchBar() {
           </CardContent>
         </Card>
       )}
-      <div className="flex items-center space-x-2 mt-4 justify-center">
-        <Switch id="private-search" />
-        <Label htmlFor="private-search">Private Search</Label>
-      </div>
+
+       {showProgressBar && isSearching && <Progress value={progress} className="w-full mt-2 h-1" />}
+
+      {!showProgressBar && (
+        <div className="flex items-center space-x-2 mt-4 justify-center">
+            <Switch id="private-search" />
+            <Label htmlFor="private-search">Private Search</Label>
+        </div>
+      )}
     </div>
   );
 }

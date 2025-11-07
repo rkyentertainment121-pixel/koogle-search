@@ -25,8 +25,8 @@ export default function SearchPage() {
       <Header />
       <main className="flex-1 container mx-auto p-4 md:p-6">
         <div className="max-w-4xl mx-auto">
-            <Suspense fallback={<Skeleton className="h-14 w-full rounded-full" />}>
-              <SearchBar />
+            <Suspense fallback={<Skeleton className="h-20 w-full" />}>
+              <SearchBar showProgressBar={true} />
             </Suspense>
             <div className="mt-8">
                 <Suspense fallback={<SearchResultsSkeleton />}>
