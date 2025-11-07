@@ -28,12 +28,15 @@ export const getSearchResults = async (query: string) => {
 }
 
 export const summarizeUrl = async (url: string) => {
-  if (!url) return { summary: "" };
+  if (!url) return { summary: "", error: "No URL provided." };
   try {
     const result = await summarizeUrlFlow({ url });
-    return result;
-  } catch (error) {
+    if (result.summary.startsWith('Error:')) {
+      return { summary: "", error: result.summary };
+    }
+    return { summary: result.summary };
+  } catch (error: any) {
     console.error("Error summarizing URL:", error);
-    return { summary: "Could not generate a summary for this page." };
+    return { summary: "", error: error.message || "An unknown error occurred while generating the summary." };
   }
 }

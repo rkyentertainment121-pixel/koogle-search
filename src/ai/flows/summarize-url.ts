@@ -37,15 +37,25 @@ const fetchUrlContent = ai.defineTool(
       // NOTE: This is a simplified example. A production implementation
       // should handle various content types, character encodings, and errors.
       // It also doesn't handle dynamic/JS-rendered content.
-      const response = await fetch(url);
+      const response = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
       if (!response.ok) {
-        return `Error: Could not fetch content. Status: ${response.status}`;
+        return `Error: Could not fetch content. Server responded with status: ${response.status}`;
       }
       const text = await response.text();
       // Basic HTML tag stripping. A more robust solution like cheerio would be better.
-      return text.replace(/<[^>]*>/g, '').substring(0, 5000);
+      const cleanText = text.replace(/<style[^>]*>.*<\/style>/gs, '')
+                             .replace(/<script[^>]*>.*<\/script>/gs, '')
+                             .replace(/<[^>]*>/g, '')
+                             .replace(/\s\s+/g, ' ')
+                             .trim();
+
+      if (!cleanText) {
+        return 'Error: Could not extract any readable text from the URL.';
+      }
+      
+      return cleanText.substring(0, 8000);
     } catch (e: any) {
-      return `Error: Failed to fetch URL content. ${e.message}`;
+      return `Error: Failed to fetch URL content. This could be due to network issues or the website's security policies (CORS). Details: ${e.message}`;
     }
   }
 );
@@ -60,7 +70,7 @@ const prompt = ai.definePrompt({
   input: { schema: SummarizeUrlInputSchema },
   output: { schema: SummarizeUrlOutputSchema },
   tools: [fetchUrlContent],
-  prompt: `Please fetch the content of the provided URL and generate a concise, easy-to-read summary of the webpage. The summary should capture the main points and key information.
+  prompt: `Please fetch the content of the provided URL and generate a concise, easy-to-read summary of the webpage. The summary should capture the main points and key information. If you receive an error message when fetching, explain the error to the user instead of summarizing.
 
 URL to summarize: {{{url}}}`,
 });

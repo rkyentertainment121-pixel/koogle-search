@@ -4,10 +4,11 @@ import React, { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ExternalLink, RefreshCw, Loader2 } from 'lucide-react';
+import { ArrowLeft, ExternalLink, RefreshCw, Loader2, AlertTriangle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { summarizeUrl } from '@/lib/actions';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 function SummarySkeleton() {
   return (
@@ -48,10 +49,10 @@ function ViewPageContent() {
       if (result.summary) {
         setSummary(result.summary);
       } else {
-        setError('Could not generate a summary for this page.');
+        setError(result.error || 'Could not generate a summary for this page.');
       }
-    } catch (err) {
-      setError('An error occurred while generating the summary.');
+    } catch (err: any) {
+      setError(err.message || 'An error occurred while generating the summary.');
       console.error(err);
     } finally {
       setLoading(false);
@@ -104,7 +105,15 @@ function ViewPageContent() {
       <div className="flex-1 w-full h-full overflow-y-auto">
         <div className="container max-w-4xl mx-auto py-8">
             {loading && <SummarySkeleton />}
-            {error && <p className="text-destructive text-center">{error}</p>}
+            {error && !loading && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Summarization Failed</AlertTitle>
+                <AlertDescription>
+                  {error}
+                </AlertDescription>
+              </Alert>
+            )}
             {summary && !loading && (
                  <Card>
                     <CardHeader>
