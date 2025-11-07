@@ -39,7 +39,7 @@ const fetchUrlContent = ai.defineTool(
       // It also doesn't handle dynamic/JS-rendered content.
       const response = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
       if (!response.ok) {
-        return `Error: Could not fetch content. The website responded with status: ${response.status}. This may be due to website security (like CORS), or the page may not exist.`;
+        return `Error: Could not fetch content from the URL. The website responded with status: ${response.status}. This may be due to website security policies (like CORS), or the page may not exist.`;
       }
       const text = await response.text();
       // Basic HTML tag stripping. A more robust solution like cheerio would be better.
@@ -47,17 +47,19 @@ const fetchUrlContent = ai.defineTool(
                              .replace(/<script[^>]*>.*<\/script>/gs, '')
                              .replace(/<nav[^>]*>.*<\/nav>/gs, '')
                              .replace(/<footer[^>]*>.*<\/footer>/gs, '')
-                             .replace(/<[^>]*>/g, ' ')
+                             .replace(/<head[^>]*>.*<\/head>/gs, '')
+                             .replace(/<[^>]+>/g, ' ')
                              .replace(/\s\s+/g, ' ')
                              .trim();
 
-      if (!cleanText || cleanText.length < 100) {
-        return 'Error: Could not extract enough readable text from the URL. The page might be too short, require JavaScript to load, or is not in a readable format.';
+      if (!cleanText || cleanText.length < 200) {
+        return 'Error: Could not extract enough readable text from the URL. The page might be too short, require JavaScript to load its content (like YouTube), or is not in a readable text format.';
       }
       
-      return cleanText.substring(0, 8000);
+      // Truncate to avoid exceeding model token limits
+      return cleanText.substring(0, 10000);
     } catch (e: any) {
-      return `Error: Failed to fetch URL content. This could be due to network issues or the website's security policies (CORS). Details: ${e.message}`;
+      return `Error: Failed to fetch the URL content. This could be due to network issues or the website\'s security policies (CORS). Details: ${e.message}`;
     }
   }
 );
