@@ -16,10 +16,10 @@ import type { SearchEngine } from "@/lib/types";
 
 const searchEngines: { name: SearchEngine, label: string; url: string; queryParam: string }[] = [
     { name: "koogle", label: "Koogle", url: "/search", queryParam: "q" },
-    { name: "google", label: "Google", url: "https://www.google.com/search", queryParam: "q" },
-    { name: "bing", label: "Bing", url: "https://www.bing.com/search", queryParam: "q" },
-    { name: "yahoo", label: "Yahoo", url: "https://search.yahoo.com/search", queryParam: "p" },
-    { name: "duckduckgo", label: "DuckDuckGo", url: "https://duckduckgo.com/", queryParam: "q" },
+    { name: "google", label: "Google", url: "/search", queryParam: "q" },
+    { name: "bing", label: "Bing", url: "/search", queryParam: "q" },
+    { name: "yahoo", label: "Yahoo", url: "/search", queryParam: "q" },
+    { name: "duckduckgo", label: "DuckDuckGo", url: "/search", queryParam: "q" },
 ];
 
 export default function SearchBar() {
@@ -79,7 +79,7 @@ export default function SearchBar() {
 
 
   const fetchSuggestions = useCallback(async (searchQuery: string) => {
-    if (searchQuery.length > 1 && selectedEngine === 'koogle') {
+    if (searchQuery.length > 1) {
       setIsLoading(true);
       const result = await getSuggestions(searchQuery);
       setSuggestions(result.suggestions || []);
@@ -91,7 +91,7 @@ export default function SearchBar() {
       setSuggestions([]);
       setSuggestionsVisible(false);
     }
-  }, [selectedEngine]);
+  }, []);
 
   useEffect(() => {
     fetchSuggestions(debouncedQuery);
@@ -117,14 +117,7 @@ export default function SearchBar() {
 
   const handleSearch = (searchQuery: string) => {
     if (searchQuery.trim() !== "") {
-      const engine = searchEngines.find(e => e.name === selectedEngine);
-      if (engine) {
-          if (engine.name === 'koogle') {
-              router.push(`${engine.url}?${engine.queryParam}=${encodeURIComponent(searchQuery.trim())}`);
-          } else {
-              window.open(`${engine.url}?${engine.queryParam}=${encodeURIComponent(searchQuery.trim())}`, '_blank');
-          }
-      }
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
       setSuggestionsVisible(false);
     }
   };
@@ -194,7 +187,7 @@ export default function SearchBar() {
           </div>
         </div>
       </form>
-      {isSuggestionsVisible && selectedEngine === 'koogle' && (
+      {isSuggestionsVisible && (
         <Card className="absolute top-full mt-2 w-full shadow-lg z-10 animate-in fade-in-0 zoom-in-95">
           <CardContent className="p-2">
             {isLoading && (
