@@ -1,13 +1,13 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { SearchResult, SearchEngine } from '@/lib/types';
 import { Bookmark, ExternalLink } from 'lucide-react';
 import { getSearchResults } from '@/lib/actions';
-import Link from 'next/link';
+import { TabsContext } from '@/components/providers/tabs-provider';
 
 function SearchResultsSkeleton() {
   return (
@@ -27,12 +27,18 @@ function SearchResultsSkeleton() {
 }
 
 const SearchResultItem = ({ result }: { result: SearchResult }) => {
+    const { addTab } = useContext(TabsContext);
     let domain = "unknown";
     try {
         domain = new URL(result.url).hostname;
     } catch (e) {
         console.error("Invalid URL for search result:", result.url);
     }
+
+  const handleResultClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    addTab(result.url, result.title);
+  };
 
   return (
     <Card className="p-4 transition-all hover:shadow-md">
@@ -50,14 +56,15 @@ const SearchResultItem = ({ result }: { result: SearchResult }) => {
             )}
             <span className="truncate">{domain}</span>
           </div>
-          <Link
-            href={`/search/view?url=${encodeURIComponent(result.url)}`}
-            className="block"
+          <a
+            href={result.url}
+            onClick={handleResultClick}
+            className="block cursor-pointer"
           >
             <h3 className="text-xl font-semibold text-primary-foreground font-headline text-blue-700 dark:text-blue-400 hover:underline">
               {result.title}
             </h3>
-          </Link>
+          </a>
           <p className="mt-2 text-muted-foreground">{result.description}</p>
         </div>
         <div className="flex flex-col gap-2">

@@ -3,6 +3,7 @@ import Header from "@/components/koogle/header";
 import SearchBar from "@/components/koogle/search-bar";
 import SearchResultsList from "@/components/koogle/search-results-list";
 import { Skeleton } from "@/components/ui/skeleton";
+import TabsBar from "@/components/koogle/tabs-bar";
 
 function SearchResultsSkeleton() {
     return (
@@ -21,9 +22,10 @@ function SearchResultsSkeleton() {
 
 export default function SearchPage() {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col h-screen">
       <Header />
-      <main className="flex-1 container mx-auto p-4 md:p-6">
+      <TabsBar />
+      <main className="flex-1 container mx-auto p-4 md:p-6 overflow-y-auto">
         <div className="max-w-4xl mx-auto">
             <Suspense fallback={<Skeleton className="h-20 w-full" />}>
               <SearchBar showProgressBar={true} />

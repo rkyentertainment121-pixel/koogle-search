@@ -5,3 +5,9 @@ export type SearchResult = {
 };
 
 export type SearchEngine = "koogle" | "google" | "bing" | "yahoo" | "duckduckgo";
+
+export type Tab = {
+  id: string;
+  url: string;
+  title: string;
+};

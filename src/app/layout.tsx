@@ -3,6 +3,7 @@ import './globals.css';
 import { cn } from '@/lib/utils';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
+import { TabsProvider } from '@/components/providers/tabs-provider';
 
 export const metadata: Metadata = {
   title: 'Koogle Search',
@@ -28,7 +29,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <TabsProvider>
+            {children}
+          </TabsProvider>
           <Toaster />
         </ThemeProvider>
       </body>
