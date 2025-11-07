@@ -3,3 +3,5 @@ export type SearchResult = {
   url: string;
   description: string;
 };
+
+export type SearchEngine = "koogle" | "google" | "bing" | "yahoo" | "duckduckgo";

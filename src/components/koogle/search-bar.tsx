@@ -11,11 +11,22 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { SearchEngine } from "@/lib/types";
+
+const searchEngines: { name: SearchEngine, label: string; url: string; queryParam: string }[] = [
+    { name: "koogle", label: "Koogle", url: "/search", queryParam: "q" },
+    { name: "google", label: "Google", url: "https://www.google.com/search", queryParam: "q" },
+    { name: "bing", label: "Bing", url: "https://www.bing.com/search", queryParam: "q" },
+    { name: "yahoo", label: "Yahoo", url: "https://search.yahoo.com/search", queryParam: "p" },
+    { name: "duckduckgo", label: "DuckDuckGo", url: "https://duckduckgo.com/", queryParam: "q" },
+];
 
 export default function SearchBar() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(searchParams.get("q") || "");
+  const [selectedEngine, setSelectedEngine] = useState<SearchEngine>("koogle");
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isSuggestionsVisible, setSuggestionsVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -25,6 +36,13 @@ export default function SearchBar() {
   const { toast } = useToast();
   
   const speechRecognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    const savedEngine = localStorage.getItem("searchEngine") as SearchEngine;
+    if (savedEngine && searchEngines.some(e => e.name === savedEngine)) {
+      setSelectedEngine(savedEngine);
+    }
+  }, []);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -61,7 +79,7 @@ export default function SearchBar() {
 
 
   const fetchSuggestions = useCallback(async (searchQuery: string) => {
-    if (searchQuery.length > 1) {
+    if (searchQuery.length > 1 && selectedEngine === 'koogle') {
       setIsLoading(true);
       const result = await getSuggestions(searchQuery);
       setSuggestions(result.suggestions || []);
@@ -73,7 +91,7 @@ export default function SearchBar() {
       setSuggestions([]);
       setSuggestionsVisible(false);
     }
-  }, []);
+  }, [selectedEngine]);
 
   useEffect(() => {
     fetchSuggestions(debouncedQuery);
@@ -91,9 +109,22 @@ export default function SearchBar() {
     };
   }, []);
 
+  const handleEngineChange = (engine: SearchEngine) => {
+    setSelectedEngine(engine);
+    localStorage.setItem("searchEngine", engine);
+    setSuggestionsVisible(false);
+  };
+
   const handleSearch = (searchQuery: string) => {
     if (searchQuery.trim() !== "") {
-      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      const engine = searchEngines.find(e => e.name === selectedEngine);
+      if (engine) {
+          if (engine.name === 'koogle') {
+              router.push(`${engine.url}?${engine.queryParam}=${encodeURIComponent(searchQuery.trim())}`);
+          } else {
+              window.open(`${engine.url}?${engine.queryParam}=${encodeURIComponent(searchQuery.trim())}`, '_blank');
+          }
+      }
       setSuggestionsVisible(false);
     }
   };
@@ -126,17 +157,25 @@ export default function SearchBar() {
     <div className="w-full relative" ref={searchBarRef}>
       <form onSubmit={handleFormSubmit} className="relative">
         <div className="relative flex items-center">
+        <Select value={selectedEngine} onValueChange={handleEngineChange}>
+            <SelectTrigger className="absolute left-3 h-10 w-28 rounded-full border-none bg-muted focus:ring-0 focus:ring-offset-0">
+                <SelectValue placeholder="Engine" />
+            </SelectTrigger>
+            <SelectContent>
+                {searchEngines.map(engine => (
+                    <SelectItem key={engine.name} value={engine.name}>{engine.label}</SelectItem>
+                ))}
+            </SelectContent>
+        </Select>
+
           <Input
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => query.length > 1 && setSuggestionsVisible(true)}
-            placeholder="Search Koogle or type a URL"
-            className="h-14 pl-12 pr-24 rounded-full text-lg shadow-lg focus-visible:ring-offset-2"
+            placeholder="Search..."
+            className="h-14 pl-36 pr-24 rounded-full text-lg shadow-lg focus-visible:ring-offset-2"
           />
-          <div className="absolute left-4">
-            <Search className="h-6 w-6 text-muted-foreground" />
-          </div>
           <div className="absolute right-4 flex items-center gap-2">
             {query && (
               <Button
@@ -155,7 +194,7 @@ export default function SearchBar() {
           </div>
         </div>
       </form>
-      {isSuggestionsVisible && (
+      {isSuggestionsVisible && selectedEngine === 'koogle' && (
         <Card className="absolute top-full mt-2 w-full shadow-lg z-10 animate-in fade-in-0 zoom-in-95">
           <CardContent className="p-2">
             {isLoading && (
