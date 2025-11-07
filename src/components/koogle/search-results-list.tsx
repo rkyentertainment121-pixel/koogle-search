@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { SearchResult } from "@/lib/types";
 import { Bookmark, ExternalLink } from "lucide-react";
 import { getSearchResults } from "@/lib/actions";
+import { Progress } from "@/components/ui/progress";
 
 function SearchResultsSkeleton() {
     return (
@@ -64,17 +65,34 @@ export default function SearchResultsList() {
     const [results, setResults] = useState<SearchResult[]>([]);
     const [loading, setLoading] = useState(true);
     const [totalTime, setTotalTime] = useState(0);
+    const [progress, setProgress] = useState(0);
 
     useEffect(() => {
         if (query) {
             setLoading(true);
+            setProgress(0);
+            
+            const interval = setInterval(() => {
+                setProgress(prev => {
+                    if (prev >= 95) {
+                        clearInterval(interval);
+                        return prev;
+                    }
+                    return prev + 5;
+                });
+            }, 200);
+
             const startTime = performance.now();
             getSearchResults(query).then(searchResult => {
                 const endTime = performance.now();
                 setTotalTime(Number(((endTime-startTime)/1000).toFixed(2)));
                 setResults(searchResult.results);
                 setLoading(false);
+                setProgress(100);
+                clearInterval(interval);
             });
+
+            return () => clearInterval(interval);
         } else {
             setResults([]);
             setLoading(false);
@@ -82,9 +100,14 @@ export default function SearchResultsList() {
     }, [query]);
 
     if (loading) {
-        return <SearchResultsSkeleton />;
+        return (
+            <div>
+                <Progress value={progress} className="w-full mb-4" />
+                <SearchResultsSkeleton />
+            </div>
+        );
     }
-
+    
     if (!query) {
         return <div className="text-center text-muted-foreground py-10">Please enter a search query.</div>
     }
