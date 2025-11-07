@@ -29,6 +29,7 @@ function IframeView({ url, onTitleLoad }: { url: string, onTitleLoad: (title: st
     return url;
   }, [url, iframeKey]);
 
+
   if (!url) {
     return <div className="flex items-center justify-center h-full">Invalid URL</div>;
   }
@@ -39,6 +40,7 @@ function IframeView({ url, onTitleLoad }: { url: string, onTitleLoad: (title: st
       src={url}
       className="w-full h-full border-0"
       title="Search Result"
+      sandbox="allow-forms allow-modals allow-pointer-lock allow-popups allow-popups-to-escape-sandbox allow-presentation allow-same-origin allow-scripts"
       onLoad={(e) => {
         try {
           const title = (e.currentTarget.contentDocument?.title) || "New Tab";
