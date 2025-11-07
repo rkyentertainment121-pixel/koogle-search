@@ -51,7 +51,7 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const activeTab = tabs.find(t => t.id === activeTabId);
     if (activeTab) {
-      router.push(`/search/view`);
+      router.push(`/`);
     }
   // We only want this effect to run when the active tab ID changes.
   // eslint-disable-next-line react-hooks/exhaustive-deps
