@@ -11,7 +11,7 @@ import { TabsContext } from '@/components/providers/tabs-provider';
 
 function SearchResultsSkeleton() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-4 md:px-6">
       {Array.from({ length: 5 }).map((_, i) => (
         <Card key={i} className="p-4">
           <div className="flex flex-col space-y-3">
@@ -43,7 +43,7 @@ const SearchResultItem = ({ result }: { result: SearchResult }) => {
   const faviconUrl = `https://www.google.com/s2/favicons?sz=16&domain_url=${domain}`;
 
   return (
-    <Card className="p-4 transition-all hover:shadow-md">
+    <Card className="p-4 transition-all hover:shadow-md rounded-none border-x-0 border-t-0">
       <div className="flex justify-between items-start gap-4">
         <div className="flex-1">
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
@@ -126,7 +126,7 @@ export default function SearchResultsList({ query }: { query: string | null }) {
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm text-muted-foreground px-4 md:px-6">
         About {results.length} results ({totalTime} seconds)
       </p>
       {results.map((result, index) => (

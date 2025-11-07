@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useSearchParams } from 'next/navigation';
@@ -85,9 +84,9 @@ export default function ViewPage() {
             <Suspense fallback={<Skeleton className="h-20 w-full" />}>
               <div className="p-4"><SearchBar initialQuery={query} showProgressBar={true} /></div>
             </Suspense>
-            <div className="mt-8 px-4 md:px-6">
+            <div>
                 <Suspense fallback={
-                    <div className="space-y-4 pt-4">
+                    <div className="space-y-4 pt-4 px-4 md:px-6">
                         {Array.from({ length: 5 }).map((_, i) => (
                             <div key={i} className="flex flex-col space-y-3">
                                 <Skeleton className="h-4 w-48" />
