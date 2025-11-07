@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { createContext, useState, ReactNode, useEffect } from 'react';
@@ -22,8 +23,10 @@ export const TabsContext = createContext<TabsContextType>({
   updateTabTitle: () => {},
 });
 
+const createUniqueId = () => `tab-${Date.now()}-${Math.random()}`;
+
 const createNewTab = (): Tab => ({
-  id: `tab-${Date.now()}`,
+  id: createUniqueId(),
   url: 'koogle:newtab',
   title: 'New Tab',
 });
@@ -68,7 +71,7 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
 
   const addTab = (url: string, title?: string) => {
     const newTab: Tab = {
-      id: `tab-${Date.now()}`,
+      id: createUniqueId(),
       url: url,
       title: title || (url === 'koogle:newtab' ? 'New Tab' : url),
     };
@@ -79,20 +82,26 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
   const closeTab = (tabId: string) => {
     setTabs(prevTabs => {
       const tabIndex = prevTabs.findIndex(tab => tab.id === tabId);
+      if (tabIndex === -1) return prevTabs; // Tab already closed
+
       const newTabs = prevTabs.filter(tab => tab.id !== tabId);
 
       if (activeTabId === tabId) {
-        if (newTabs.length === 0) {
-          const newHomeTab = createNewTab();
-          setTabs([newHomeTab]);
-          setActiveTabId(newHomeTab.id);
-          return [newHomeTab];
-        } else {
-          // set new active tab
+        if (newTabs.length > 0) {
+          // Set new active tab to the one before, or the first one
           const newActiveIndex = Math.max(0, tabIndex - 1);
           setActiveTabId(newTabs[newActiveIndex].id);
+        } else {
+          // If all tabs are closed, this will be handled by the useEffect
+          setActiveTabId(null);
         }
       }
+      
+      if (newTabs.length === 0) {
+        const newHomeTab = createNewTab();
+        return [newHomeTab];
+      }
+
       return newTabs;
     });
   };
