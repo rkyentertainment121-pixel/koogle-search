@@ -1,6 +1,7 @@
 "use server";
 
 import { suggestWebsitesAndQueries } from "@/ai/flows/suggest-websites-and-queries";
+import { getSearchResults as getSearchResultsFlow } from "@/ai/flows/get-search-results";
 
 export const getSuggestions = async (inputText: string) => {
   if (!inputText) return { suggestions: [] };
@@ -13,3 +14,14 @@ export const getSuggestions = async (inputText: string) => {
     return { suggestions: [] };
   }
 };
+
+export const getSearchResults = async (query: string) => {
+  if (!query) return { results: [] };
+  try {
+    const result = await getSearchResultsFlow({ query });
+    return result;
+  } catch (error) {
+    console.error("Error fetching search results:", error);
+    return { results: [] };
+  }
+}

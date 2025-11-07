@@ -6,14 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SearchResult } from "@/lib/types";
 import { Bookmark, ExternalLink } from "lucide-react";
-
-const mockSearchResults: SearchResult[] = [
-    { title: "React – A JavaScript library for building user interfaces", url: "https://react.dev", description: "React makes it painless to create interactive UIs. Design simple views for each state in your application, and React will efficiently update and render just the right components when your data changes." },
-    { title: "Tailwind CSS - Rapidly build modern websites without ever leaving your HTML.", url: "https://tailwindcss.com", description: "A utility-first CSS framework packed with classes like flex, pt-4, text-center and rotate-90 that can be composed to build any design, directly in your markup." },
-    { title: "Next.js by Vercel - The React Framework", url: "https://nextjs.org", description: "Next.js enables you to create full-stack Web applications by extending the latest React features, and integrating powerful Rust-based JavaScript tooling for the fastest builds." },
-    { title: "Firebase | The comprehensive app development platform", url: "https://firebase.google.com", description: "Firebase is an app development platform that helps you build and grow apps and games users love. Backed by Google and trusted by millions of businesses around the world." },
-    { title: "Brave Browser | Secure, Fast & Private Web Browser with Adblocker", url: "https://brave.com/", description: "The Brave browser is a fast, private and secure web browser for PC, Mac and mobile. Download now to enjoy a faster ad-free browsing experience that saves data and battery life by blocking tracking software." }
-];
+import { getSearchResults } from "@/lib/actions";
 
 function SearchResultsSkeleton() {
     return (
@@ -70,25 +63,22 @@ export default function SearchResultsList() {
     const query = searchParams.get("q");
     const [results, setResults] = useState<SearchResult[]>([]);
     const [loading, setLoading] = useState(true);
+    const [totalTime, setTotalTime] = useState(0);
 
     useEffect(() => {
-        setLoading(true);
-        // Simulate API call
-        const timer = setTimeout(() => {
-            if (query) {
-                // simple filter for mock results
-                const filteredResults = mockSearchResults.filter(r => 
-                    r.title.toLowerCase().includes(query.toLowerCase()) || 
-                    r.description.toLowerCase().includes(query.toLowerCase())
-                );
-                setResults(filteredResults);
-            } else {
-                setResults(mockSearchResults);
-            }
+        if (query) {
+            setLoading(true);
+            const startTime = performance.now();
+            getSearchResults(query).then(searchResult => {
+                const endTime = performance.now();
+                setTotalTime(Number(((endTime-startTime)/1000).toFixed(2)));
+                setResults(searchResult.results);
+                setLoading(false);
+            });
+        } else {
+            setResults([]);
             setLoading(false);
-        }, 1000);
-
-        return () => clearTimeout(timer);
+        }
     }, [query]);
 
     if (loading) {
@@ -105,7 +95,7 @@ export default function SearchResultsList() {
 
     return (
         <div className="space-y-6">
-            <p className="text-sm text-muted-foreground">About {results.length} results (0.42 seconds)</p>
+            <p className="text-sm text-muted-foreground">About {results.length} results ({totalTime} seconds)</p>
             {results.map((result, index) => (
                 <SearchResultItem key={index} result={result} />
             ))}
