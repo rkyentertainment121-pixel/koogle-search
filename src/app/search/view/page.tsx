@@ -81,11 +81,11 @@ export default function ViewPage() {
   if (isSearch) {
     return (
        <main className="flex-1 overflow-y-auto w-full">
-        <div className="mx-auto px-4 md:px-6">
+        <div>
             <Suspense fallback={<Skeleton className="h-20 w-full" />}>
-              <SearchBar initialQuery={query} showProgressBar={true} />
+              <div className="p-4"><SearchBar initialQuery={query} showProgressBar={true} /></div>
             </Suspense>
-            <div className="mt-8">
+            <div className="mt-8 px-4 md:px-6">
                 <Suspense fallback={
                     <div className="space-y-4 pt-4">
                         {Array.from({ length: 5 }).map((_, i) => (
