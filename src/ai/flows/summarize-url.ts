@@ -39,18 +39,20 @@ const fetchUrlContent = ai.defineTool(
       // It also doesn't handle dynamic/JS-rendered content.
       const response = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
       if (!response.ok) {
-        return `Error: Could not fetch content. Server responded with status: ${response.status}`;
+        return `Error: Could not fetch content. The website responded with status: ${response.status}. This may be due to website security (like CORS), or the page may not exist.`;
       }
       const text = await response.text();
       // Basic HTML tag stripping. A more robust solution like cheerio would be better.
       const cleanText = text.replace(/<style[^>]*>.*<\/style>/gs, '')
                              .replace(/<script[^>]*>.*<\/script>/gs, '')
-                             .replace(/<[^>]*>/g, '')
+                             .replace(/<nav[^>]*>.*<\/nav>/gs, '')
+                             .replace(/<footer[^>]*>.*<\/footer>/gs, '')
+                             .replace(/<[^>]*>/g, ' ')
                              .replace(/\s\s+/g, ' ')
                              .trim();
 
-      if (!cleanText) {
-        return 'Error: Could not extract any readable text from the URL.';
+      if (!cleanText || cleanText.length < 100) {
+        return 'Error: Could not extract enough readable text from the URL. The page might be too short, require JavaScript to load, or is not in a readable format.';
       }
       
       return cleanText.substring(0, 8000);
