@@ -37,12 +37,15 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (isInitialMount.current) {
-      const homeTab = createNewTab();
-      setTabs([homeTab]);
-      setActiveTabId(homeTab.id);
+      if (tabs.length === 0) {
+        const homeTab = createNewTab();
+        setTabs([homeTab]);
+        setActiveTabId(homeTab.id);
+      }
       isInitialMount.current = false;
     }
-  }, []);
+  }, [tabs.length]);
+  
 
   const addTab = (url: string, title?: string) => {
     const newTab: Tab = {
@@ -59,20 +62,26 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
     const tabIndex = tabs.findIndex(tab => tab.id === tabId);
     if (tabIndex === -1) return;
 
+    // Create the new list of tabs by filtering out the closed one
     const newTabs = tabs.filter(tab => tab.id !== tabId);
 
-    if (activeTabId === tabId) {
-      if (newTabs.length > 0) {
-        const newActiveIndex = Math.max(0, tabIndex - 1);
-        setActiveTabId(newTabs[newActiveIndex].id);
-      } else {
-        const homeTab = createNewTab();
-        setTabs([homeTab]);
-        setActiveTabId(homeTab.id);
-        return; // Exit to avoid setting tabs twice
-      }
+    // If there are no tabs left, create a new default tab
+    if (newTabs.length === 0) {
+      const homeTab = createNewTab();
+      setTabs([homeTab]);
+      setActiveTabId(homeTab.id);
+      return;
     }
     
+    // If the closed tab was the active one, decide on the next active tab
+    if (activeTabId === tabId) {
+        // If the closed tab was the last one, activate the one before it
+        // Otherwise, activate the one at the same index (which is the one after the closed one)
+        const newActiveIndex = tabIndex >= newTabs.length ? newTabs.length - 1 : tabIndex;
+        setActiveTabId(newTabs[newActiveIndex].id);
+    }
+    
+    // Set the new state for the tabs
     setTabs(newTabs);
   };
 
