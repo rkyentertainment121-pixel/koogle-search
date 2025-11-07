@@ -24,12 +24,13 @@ import { Progress } from '@/components/ui/progress';
 const searchEngines: {
   name: SearchEngine;
   label: string;
+  url?: string;
 }[] = [
   { name: 'koogle', label: 'Koogle' },
-  { name: 'google', label: 'Google' },
-  { name: 'bing', label: 'Bing' },
-  { name: 'yahoo', label: 'Yahoo' },
-  { name: 'duckduckgo', label: 'DuckDuckGo' },
+  { name: 'google', label: 'Google', url: 'https://www.google.com/search?q=' },
+  { name: 'bing', label: 'Bing', url: 'https://www.bing.com/search?q=' },
+  { name: 'yahoo', label: 'Yahoo', url: 'https://search.yahoo.com/search?p=' },
+  { name: 'duckduckgo', label: 'DuckDuckGo', url: 'https://duckduckgo.com/?q=' },
 ];
 
 type SearchBarProps = {
@@ -172,8 +173,15 @@ export default function SearchBar({ showProgressBar = false }: SearchBarProps) {
 
   const handleSearch = (searchQuery: string, engineName: SearchEngine) => {
     if (searchQuery.trim() === '') return;
-
     setSuggestionsVisible(false);
+
+    const engineData = searchEngines.find(e => e.name === engineName);
+    
+    if (engineData && engineData.url) {
+        window.open(engineData.url + encodeURIComponent(searchQuery.trim()), '_blank');
+        return;
+    }
+
     setIsSearching(true);
     setProgress(0);
 
