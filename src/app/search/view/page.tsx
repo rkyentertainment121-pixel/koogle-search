@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { Suspense, useContext, useEffect, useMemo, useState } from 'react';
+import { Suspense, useContext, useEffect, useState, useMemo } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TabsContext } from '@/components/providers/tabs-provider';
 import SearchBar from '@/components/koogle/search-bar';
@@ -16,27 +16,13 @@ function IframeView({ url, onTitleLoad }: { url: string, onTitleLoad: (title: st
     setIframeKey(Date.now());
   }, [url]);
 
-  const currentUrl = useMemo(() => {
-    if (url) {
-        try {
-            const urlObj = new URL(url);
-            urlObj.searchParams.set('_t', iframeKey.toString());
-            return urlObj.toString();
-        } catch {
-            return url;
-        }
-    }
-    return url;
-  }, [url, iframeKey]);
-
-
   if (!url) {
     return <div className="flex items-center justify-center h-full">Invalid URL</div>;
   }
 
   return (
     <iframe
-      key={currentUrl}
+      key={iframeKey}
       src={url}
       className="w-full h-full border-0"
       title="Search Result"
@@ -57,7 +43,6 @@ function IframeView({ url, onTitleLoad }: { url: string, onTitleLoad: (title: st
 
 export default function ViewPage() {
   const { activeTab, updateTabTitle } = useContext(TabsContext);
-  const searchParams = useSearchParams();
 
   const handleTitleLoad = (title: string) => {
     if (activeTab) {
@@ -68,7 +53,7 @@ export default function ViewPage() {
   const url = activeTab?.url;
   const isNewTab = url === 'koogle:newtab';
   const isSearch = url?.startsWith('koogle:search?q=');
-  const query = isSearch ? url.split('?q=')[1] : '';
+  const query = isSearch ? decodeURIComponent(url.split('?q=')[1]) : '';
 
   if (isNewTab) {
     return (
@@ -90,7 +75,7 @@ export default function ViewPage() {
   if (isSearch) {
     return (
        <main className="flex-1 p-4 md:p-6 overflow-y-auto">
-        <div className="">
+        <div className="max-w-4xl mx-auto">
             <Suspense fallback={<Skeleton className="h-20 w-full" />}>
               <SearchBar initialQuery={query} showProgressBar={true} />
             </Suspense>

@@ -51,9 +51,7 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const activeTab = tabs.find(t => t.id === activeTabId);
     if (activeTab) {
-      // Using a unique value (`v`) ensures that Next.js router
-      // triggers a navigation even if the base URL is the same.
-      router.push(`/search/view?v=${Date.now()}`);
+      router.push(`/search/view`);
     }
   // We only want this effect to run when the active tab ID changes.
   // eslint-disable-next-line react-hooks/exhaustive-deps
