@@ -1,6 +1,6 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -42,14 +42,14 @@ const SearchResultItem = ({ result }: { result: SearchResult }) => {
                         />
                         <span className="truncate">{domain}</span>
                     </div>
-                    <a href={result.url} target="_blank" rel="noopener noreferrer" className="block">
+                    <a href={result.url} rel="noopener noreferrer" className="block">
                         <h3 className="text-xl font-semibold text-primary-foreground font-headline text-blue-700 dark:text-blue-400 hover:underline">{result.title}</h3>
                     </a>
                     <p className="mt-2 text-muted-foreground">{result.description}</p>
                 </div>
                 <div className="flex flex-col gap-2">
                      <Bookmark className="h-5 w-5 text-muted-foreground hover:text-primary cursor-pointer" />
-                     <a href={result.url} target="_blank" rel="noopener noreferrer">
+                     <a href={result.url} rel="noopener noreferrer">
                         <ExternalLink className="h-5 w-5 text-muted-foreground hover:text-primary cursor-pointer" />
                      </a>
                 </div>
