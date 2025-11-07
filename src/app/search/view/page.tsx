@@ -89,8 +89,8 @@ export default function ViewPage() {
 
   if (isSearch) {
     return (
-       <main className="flex-1 container mx-auto p-4 md:p-6 overflow-y-auto">
-        <div className="max-w-4xl mx-auto">
+       <main className="flex-1 p-4 md:p-6 overflow-y-auto">
+        <div className="">
             <Suspense fallback={<Skeleton className="h-20 w-full" />}>
               <SearchBar initialQuery={query} showProgressBar={true} />
             </Suspense>
