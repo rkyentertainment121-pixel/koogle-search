@@ -32,7 +32,7 @@ export const summarizeUrl = async (url: string) => {
   try {
     const result = await summarizeUrlFlow({ url });
     if (result.summary.startsWith('Error:')) {
-      return { summary: "", error: result.summary };
+      return { summary: "", error: result.summary.replace('Error: ', '') };
     }
     return { summary: result.summary };
   } catch (error: any) {

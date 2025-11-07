@@ -8,7 +8,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 
 const SummarizeUrlInputSchema = z.object({
   url: z.string().url().describe('The URL of the webpage to summarize.'),
@@ -72,7 +72,7 @@ const prompt = ai.definePrompt({
   input: { schema: SummarizeUrlInputSchema },
   output: { schema: SummarizeUrlOutputSchema },
   tools: [fetchUrlContent],
-  prompt: `Please fetch the content of the provided URL and generate a concise, easy-to-read summary of the webpage. The summary should capture the main points and key information. If you receive an error message when fetching, explain the error to the user instead of summarizing.
+  prompt: `Please fetch the content of the provided URL and generate a concise, easy-to-read summary of the webpage. The summary should capture the main points and key information. If you receive an error message when fetching, your summary should be that error message.
 
 URL to summarize: {{{url}}}`,
 });
