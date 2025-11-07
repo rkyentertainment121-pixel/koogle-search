@@ -5,7 +5,7 @@ import React, { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SearchResult } from "@/lib/types";
-import { Globe, Bookmark, ExternalLink } from "lucide-react";
+import { Bookmark, ExternalLink } from "lucide-react";
 
 const mockSearchResults: SearchResult[] = [
     { title: "React – A JavaScript library for building user interfaces", url: "https://react.dev", description: "React makes it painless to create interactive UIs. Design simple views for each state in your application, and React will efficiently update and render just the right components when your data changes." },
@@ -81,12 +81,7 @@ export default function SearchResultsList() {
                     r.title.toLowerCase().includes(query.toLowerCase()) || 
                     r.description.toLowerCase().includes(query.toLowerCase())
                 );
-                // Add the query as the top result
-                setResults([
-                    { title: `Search results for "${query}"`, url: `https://google.com/search?q=${encodeURIComponent(query)}`, description: `Showing web results for your search. To see more, visit Google.` },
-                    ...filteredResults, 
-                    ...mockSearchResults,
-                ].filter((v,i,a)=>a.findIndex(v2=>(v2.url===v.url))===i).slice(0, 8));
+                setResults(filteredResults);
             } else {
                 setResults([]);
             }
