@@ -11,7 +11,7 @@ import { TabsContext } from '@/components/providers/tabs-provider';
 
 function SearchResultsSkeleton() {
   return (
-    <div className="space-y-6 px-4 md:px-6">
+    <div className="space-y-6">
       {Array.from({ length: 5 }).map((_, i) => (
         <Card key={i} className="p-4">
           <div className="flex flex-col space-y-3">
