@@ -1,8 +1,8 @@
 'use client';
 
 import { Mic, Search, X, Loader2 } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, useCallback, useRef, useContext } from 'react';
 import { useDebounce } from '@/hooks/use-debounce';
 import { getSuggestions } from '@/lib/actions';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select';
 import type { SearchEngine } from '@/lib/types';
 import { Progress } from '@/components/ui/progress';
+import { TabsContext } from '../providers/tabs-provider';
 
 const searchEngines: {
   name: SearchEngine;
@@ -34,16 +35,15 @@ const searchEngines: {
 ];
 
 type SearchBarProps = {
+  initialQuery?: string;
   showProgressBar?: boolean;
 };
 
-export default function SearchBar({ showProgressBar = false }: SearchBarProps) {
+export default function SearchBar({ initialQuery = '', showProgressBar = false }: SearchBarProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const [query, setQuery] = useState(searchParams.get('q') || '');
-  const [selectedEngine, setSelectedEngine] = useState<SearchEngine>(
-    (searchParams.get('engine') as SearchEngine) || 'koogle'
-  );
+  const { addTab } = useContext(TabsContext);
+  const [query, setQuery] = useState(initialQuery);
+  const [selectedEngine, setSelectedEngine] = useState<SearchEngine>('koogle');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isSuggestionsVisible, setSuggestionsVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -56,6 +56,10 @@ export default function SearchBar({ showProgressBar = false }: SearchBarProps) {
 
   const [isSearching, setIsSearching] = useState(false);
   const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    setQuery(initialQuery);
+  }, [initialQuery]);
 
   useEffect(() => {
     const savedEngine = localStorage.getItem('searchEngine') as SearchEngine;
@@ -133,9 +137,7 @@ export default function SearchBar({ showProgressBar = false }: SearchBarProps) {
   }, []);
 
   useEffect(() => {
-    if (showProgressBar) {
-      const queryParam = searchParams.get('q');
-      if (queryParam) {
+    if (showProgressBar && query) {
         setIsSearching(true);
         setProgress(0);
         const interval = setInterval(() => {
@@ -148,6 +150,7 @@ export default function SearchBar({ showProgressBar = false }: SearchBarProps) {
           });
         }, 200);
 
+        // This is just a simulation, actual loading depends on search results
         const timer = setTimeout(() => {
           setIsSearching(false);
           setProgress(100);
@@ -158,9 +161,8 @@ export default function SearchBar({ showProgressBar = false }: SearchBarProps) {
           clearInterval(interval);
           clearTimeout(timer);
         };
-      }
     }
-  }, [searchParams, showProgressBar]);
+  }, [showProgressBar, query]);
 
   const handleEngineChange = (engine: SearchEngine) => {
     setSelectedEngine(engine);
@@ -177,16 +179,15 @@ export default function SearchBar({ showProgressBar = false }: SearchBarProps) {
 
     const engineData = searchEngines.find(e => e.name === engineName);
     
+    let url;
     if (engineData && engineData.url) {
-        window.open(engineData.url + encodeURIComponent(searchQuery.trim()), '_blank');
-        return;
+      url = engineData.url + encodeURIComponent(searchQuery.trim());
+    } else {
+      // Koogle search
+      url = `koogle:search?q=${encodeURIComponent(searchQuery.trim())}`;
     }
-
-    setIsSearching(true);
-    setProgress(0);
-
-    const url = `/search?q=${encodeURIComponent(searchQuery.trim())}&engine=${engineName}`;
-    router.push(url);
+    
+    addTab(url, searchQuery);
   };
 
   const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {

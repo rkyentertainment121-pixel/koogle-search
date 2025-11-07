@@ -11,7 +11,7 @@ interface TabsContextType {
   addTab: (url: string, title?: string) => void;
   closeTab: (tabId: string) => void;
   setActiveTab: (tabId: string) => void;
-  updateTabTitle: (url: string, title: string) => void;
+  updateTabTitle: (tabId: string, title: string) => void;
 }
 
 export const TabsContext = createContext<TabsContextType>({
@@ -35,8 +35,6 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   useEffect(() => {
     // Initialize with a single "New Tab"
@@ -51,55 +49,58 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const activeTab = tabs.find(t => t.id === activeTabId);
     if (activeTab) {
-      if (activeTab.url === 'koogle:newtab') {
-        router.push('/');
-      } else if (activeTab.url.startsWith('koogle:search')) {
-        const query = activeTab.url.split('?q=')[1] || '';
-        router.push(`/search?q=${query}`);
-      } else {
-        router.push(`/search/view?url=${encodeURIComponent(activeTab.url)}`);
+      const params = new URLSearchParams();
+      if (activeTab.url) {
+        params.set('url', activeTab.url);
       }
+      // We push a unique ID to the history state to ensure navigation
+      // occurs even if the URL is the same.
+      router.push(`/search/view?${params.toString()}&v=${Date.now()}`);
     } else if (tabs.length > 0) {
-      // If active tab is closed, set the last tab as active
-      setActiveTab(tabs[tabs.length - 1].id);
+      setActiveTabId(tabs[tabs.length - 1].id);
     } else {
-        // If all tabs are closed, create a new home tab
         addTab('koogle:newtab');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTabId, tabs]);
+  }, [activeTabId]);
+
 
   const addTab = (url: string, title?: string) => {
     const newTab: Tab = {
       id: createUniqueId(),
       url: url,
-      title: title || (url === 'koogle:newtab' ? 'New Tab' : url),
+      title: title || (url === 'koogle:newtab' ? 'New Tab' : (url.startsWith('koogle:search') ? url.split('?q=')[1] : url)),
     };
-    setTabs(prevTabs => [...prevTabs, newTab]);
+    
+    // If the currently active tab is a new tab, replace it instead of adding another one.
+    const activeTab = tabs.find(t => t.id === activeTabId);
+    if (activeTab && activeTab.url === 'koogle:newtab') {
+      setTabs(prevTabs => prevTabs.map(t => t.id === activeTabId ? newTab : t));
+    } else {
+      setTabs(prevTabs => [...prevTabs, newTab]);
+    }
     setActiveTabId(newTab.id);
   };
 
   const closeTab = (tabId: string) => {
     setTabs(prevTabs => {
       const tabIndex = prevTabs.findIndex(tab => tab.id === tabId);
-      if (tabIndex === -1) return prevTabs; // Tab already closed
+      if (tabIndex === -1) return prevTabs;
 
       const newTabs = prevTabs.filter(tab => tab.id !== tabId);
 
       if (activeTabId === tabId) {
         if (newTabs.length > 0) {
-          // Set new active tab to the one before, or the first one
           const newActiveIndex = Math.max(0, tabIndex - 1);
           setActiveTabId(newTabs[newActiveIndex].id);
         } else {
-          // If all tabs are closed, this will be handled by the useEffect
           setActiveTabId(null);
         }
       }
       
       if (newTabs.length === 0) {
-        const newHomeTab = createNewTab();
-        return [newHomeTab];
+        // The useEffect for activeTabId will handle creating a new tab
+        return [];
       }
 
       return newTabs;
@@ -110,10 +111,10 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
     setActiveTabId(tabId);
   };
 
-  const updateTabTitle = (url: string, title: string) => {
+  const updateTabTitle = (tabId: string, title: string) => {
     setTabs(prevTabs =>
       prevTabs.map(tab =>
-        tab.url === url ? { ...tab, title: title || 'Untitled' } : tab
+        tab.id === tabId ? { ...tab, title: title || 'Untitled' } : tab
       )
     );
   };

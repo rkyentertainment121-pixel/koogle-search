@@ -7,16 +7,16 @@ import { TabsContext } from '@/components/providers/tabs-provider';
 import SearchBar from '@/components/koogle/search-bar';
 import ShortcutGrid from '@/components/koogle/shortcut-grid';
 import PrivacyStats from '@/components/koogle/privacy-stats';
+import SearchResultsList from '@/components/koogle/search-results-list';
 
-function View() {
-  const searchParams = useSearchParams();
-  const url = searchParams.get('url');
-  const { updateTabTitle } = useContext(TabsContext);
+function IframeView({ url, onTitleLoad }: { url: string, onTitleLoad: (title: string) => void }) {
   const [iframeKey, setIframeKey] = useState(Date.now());
-  
+
+  useEffect(() => {
+    setIframeKey(Date.now());
+  }, [url]);
+
   const currentUrl = useMemo(() => {
-    // This is to trick the iframe into reloading when the url is the same
-    // but we want to force a refresh.
     if (url) {
         try {
             const urlObj = new URL(url);
@@ -29,38 +29,46 @@ function View() {
     return url;
   }, [url, iframeKey]);
 
-  useEffect(() => {
-    setIframeKey(Date.now());
-  }, [url]);
-
   if (!url) {
     return <div className="flex items-center justify-center h-full">Invalid URL</div>;
   }
-  
+
   return (
     <iframe
       key={currentUrl}
-      src={url} // We use the original url here to avoid issues with some sites
+      src={url}
       className="w-full h-full border-0"
       title="Search Result"
       onLoad={(e) => {
         try {
           const title = (e.currentTarget.contentDocument?.title) || "New Tab";
-          updateTabTitle(url, title);
+          onTitleLoad(title);
         } catch (error) {
           console.warn('Could not access iframe title:', error);
-          updateTabTitle(url, "New Tab");
+          onTitleLoad("New Tab");
         }
       }}
-      onError={() => updateTabTitle(url, "Failed to load")}
+      onError={() => onTitleLoad("Failed to load")}
     />
   );
 }
 
-export default function ViewPage({ isHomePage = false }: { isHomePage?: boolean }) {
-  const { activeTab } = useContext(TabsContext);
+export default function ViewPage() {
+  const { activeTab, updateTabTitle } = useContext(TabsContext);
+  const searchParams = useSearchParams();
 
-  if (isHomePage || activeTab?.url === 'koogle:newtab') {
+  const handleTitleLoad = (title: string) => {
+    if (activeTab) {
+      updateTabTitle(activeTab.id, title);
+    }
+  };
+
+  const url = activeTab?.url;
+  const isNewTab = url === 'koogle:newtab';
+  const isSearch = url?.startsWith('koogle:search?q=');
+  const query = isSearch ? url.split('?q=')[1] : '';
+
+  if (isNewTab) {
     return (
         <div className="flex flex-col min-h-screen">
             <main className="flex-1 flex flex-col items-center justify-center p-4 md:p-8">
@@ -77,11 +85,47 @@ export default function ViewPage({ isHomePage = false }: { isHomePage?: boolean 
     )
   }
 
+  if (isSearch) {
+    return (
+       <main className="flex-1 container mx-auto p-4 md:p-6 overflow-y-auto">
+        <div className="max-w-4xl mx-auto">
+            <Suspense fallback={<Skeleton className="h-20 w-full" />}>
+              <SearchBar initialQuery={query} showProgressBar={true} />
+            </Suspense>
+            <div className="mt-8">
+                <Suspense fallback={
+                    <div className="space-y-4 pt-4">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                            <div key={i} className="flex flex-col space-y-3">
+                                <Skeleton className="h-4 w-48" />
+                                <Skeleton className="h-5 w-80" />
+                                <Skeleton className="h-4 w-full" />
+                                <Skeleton className="h-4 w-3/4" />
+                            </div>
+                        ))}
+                    </div>
+                }>
+                    <SearchResultsList query={query} />
+                </Suspense>
+            </div>
+        </div>
+      </main>
+    )
+  }
+  
+  if (url) {
+    return (
+        <div className="w-full h-full flex flex-col">
+            <Suspense fallback={<Skeleton className="w-full h-full" />}>
+                <IframeView url={url} onTitleLoad={handleTitleLoad} />
+            </Suspense>
+        </div>
+    );
+  }
+
   return (
-    <div className="w-full h-full flex flex-col">
-      <Suspense fallback={<Skeleton className="w-full h-full" />}>
-        <View />
-      </Suspense>
+    <div className="flex items-center justify-center h-full text-muted-foreground">
+        Select or create a new tab to start browsing.
     </div>
   );
 }

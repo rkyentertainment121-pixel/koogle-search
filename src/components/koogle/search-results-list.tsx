@@ -5,7 +5,7 @@ import React, { useEffect, useState, useContext } from 'react';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { SearchResult, SearchEngine } from '@/lib/types';
-import { Bookmark, ExternalLink } from 'lucide-react';
+import { Bookmark, ExternalLink, Globe } from 'lucide-react';
 import { getSearchResults } from '@/lib/actions';
 import { TabsContext } from '@/components/providers/tabs-provider';
 
@@ -39,21 +39,24 @@ const SearchResultItem = ({ result }: { result: SearchResult }) => {
     e.preventDefault();
     addTab(result.url, result.title);
   };
+  
+  const faviconUrl = `https://www.google.com/s2/favicons?sz=16&domain_url=${domain}`;
 
   return (
     <Card className="p-4 transition-all hover:shadow-md">
       <div className="flex justify-between items-start gap-4">
         <div className="flex-1">
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-            {domain !== "unknown" && (
+            {domain !== "unknown" ? (
               <img
-                src={`https://www.google.com/s2/favicons?sz=16&domain_url=${domain}`}
+                src={faviconUrl}
                 alt={`${domain} favicon`}
                 width={16}
                 height={16}
                 className="rounded"
+                onError={(e) => e.currentTarget.style.display = 'none'}
               />
-            )}
+            ) : <Globe className="w-4 h-4" /> }
             <span className="truncate">{domain}</span>
           </div>
           <a
@@ -78,9 +81,8 @@ const SearchResultItem = ({ result }: { result: SearchResult }) => {
   );
 };
 
-export default function SearchResultsList() {
+export default function SearchResultsList({ query }: { query: string | null }) {
   const searchParams = useSearchParams();
-  const query = searchParams.get('q');
   const searchEngine = (searchParams.get('engine') as SearchEngine) || 'koogle';
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(true);
@@ -125,7 +127,7 @@ export default function SearchResultsList() {
   return (
     <div className="space-y-6">
       <p className="text-sm text-muted-foreground">
-        About {results.length} results ({totalTime} seconds) on {searchEngine}
+        About {results.length} results ({totalTime} seconds)
       </p>
       {results.map((result, index) => (
         <SearchResultItem key={index} result={result} />

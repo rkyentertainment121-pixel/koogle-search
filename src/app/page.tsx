@@ -1,7 +1,4 @@
 import Header from "@/components/koogle/header";
-import PrivacyStats from "@/components/koogle/privacy-stats";
-import SearchBar from "@/components/koogle/search-bar";
-import ShortcutGrid from "@/components/koogle/shortcut-grid";
 import TabsBar from "@/components/koogle/tabs-bar";
 import ViewPage from "./search/view/page";
 import { Suspense } from "react";
@@ -12,9 +9,9 @@ export default function Home() {
     <div className="flex flex-col h-screen">
       <Header />
       <TabsBar />
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto bg-background">
         <Suspense fallback={<Skeleton className="w-full h-full" />}>
-            <ViewPage isHomePage={true} />
+            <ViewPage />
         </Suspense>
       </div>
     </div>
