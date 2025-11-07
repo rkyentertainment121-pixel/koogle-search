@@ -43,6 +43,12 @@ function IframeView({ url, onTitleLoad }: { url: string, onTitleLoad: (title: st
 
 export default function ViewPage() {
   const { activeTab, updateTabTitle } = useContext(TabsContext);
+  const [currentUrl, setCurrentUrl] = useState(activeTab?.url);
+
+  useEffect(() => {
+    setCurrentUrl(activeTab?.url);
+  }, [activeTab?.url]);
+
 
   const handleTitleLoad = (title: string) => {
     if (activeTab) {
@@ -50,10 +56,9 @@ export default function ViewPage() {
     }
   };
 
-  const url = activeTab?.url;
-  const isNewTab = url === 'koogle:newtab';
-  const isSearch = url?.startsWith('koogle:search?q=');
-  const query = isSearch ? decodeURIComponent(url.split('?q=')[1]) : '';
+  const isNewTab = currentUrl === 'koogle:newtab';
+  const isSearch = currentUrl?.startsWith('koogle:search?q=');
+  const query = isSearch ? decodeURIComponent(currentUrl.split('?q=')[1]) : '';
 
   if (isNewTab) {
     return (
@@ -74,8 +79,8 @@ export default function ViewPage() {
 
   if (isSearch) {
     return (
-       <main className="flex-1 p-4 md:p-6 overflow-y-auto">
-        <div className="max-w-4xl mx-auto">
+       <main className="flex-1 p-4 md:p-6 overflow-y-auto w-full">
+        <div className="max-w-full mx-auto">
             <Suspense fallback={<Skeleton className="h-20 w-full" />}>
               <SearchBar initialQuery={query} showProgressBar={true} />
             </Suspense>
@@ -100,11 +105,11 @@ export default function ViewPage() {
     )
   }
   
-  if (url) {
+  if (currentUrl) {
     return (
         <div className="w-full h-full flex flex-col">
             <Suspense fallback={<Skeleton className="w-full h-full" />}>
-                <IframeView url={url} onTitleLoad={handleTitleLoad} />
+                <IframeView url={currentUrl} onTitleLoad={handleTitleLoad} />
             </Suspense>
         </div>
     );
