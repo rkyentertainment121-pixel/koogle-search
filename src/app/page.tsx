@@ -67,7 +67,7 @@ function ViewPage() {
                 <div className="w-full flex flex-col items-center gap-8">
                   <div className="text-center">
                     <h1 className="text-5xl md:text-7xl font-bold font-headline tracking-tighter">
-                        Koogle Search
+                        Koogle
                     </h1>
                     <p className="text-muted-foreground mt-8">Search the Web With Style -- By Kenz Media</p>
                   </div>

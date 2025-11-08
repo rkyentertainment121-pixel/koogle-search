@@ -6,7 +6,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { TabsProvider } from '@/components/providers/tabs-provider';
 
 export const metadata: Metadata = {
-  title: 'Koogle Search',
+  title: 'Koogle',
   description: 'A privacy-focused web browser',
 };
 
