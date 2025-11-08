@@ -69,7 +69,7 @@ function ViewPage() {
                     <h1 className="text-5xl md:text-7xl font-bold font-headline tracking-tighter">
                         Koogle Search
                     </h1>
-                    <p className="text-muted-foreground mt-8">The Web With Style -- By Kenz Media</p>
+                    <p className="text-muted-foreground mt-8">search the Web With Style -- By Kenz Media</p>
                   </div>
                   <div className="w-full max-w-2xl">
                     <SearchBar />
