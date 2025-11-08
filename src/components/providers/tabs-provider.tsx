@@ -2,7 +2,6 @@
 'use client';
 
 import React, { createContext, useState, ReactNode, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import type { Tab } from '@/lib/types';
 
 interface TabsContextType {
@@ -34,7 +33,6 @@ const createNewTab = (): Tab => ({
 export const TabsProvider = ({ children }: { children: ReactNode }) => {
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
-  const router = useRouter();
   const isInitialMount = useRef(true);
 
   useEffect(() => {
@@ -61,30 +59,25 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const closeTab = (tabId: string) => {
-    const tabIndex = tabs.findIndex(tab => tab.id === tabId);
-    if (tabIndex === -1) return;
+    setTabs(prevTabs => {
+      const tabIndex = prevTabs.findIndex(tab => tab.id === tabId);
+      if (tabIndex === -1) return prevTabs;
 
-    // Create the new list of tabs by filtering out the closed one
-    const newTabs = tabs.filter(tab => tab.id !== tabId);
+      const newTabs = prevTabs.filter(tab => tab.id !== tabId);
 
-    // If there are no tabs left, create a new default tab
-    if (newTabs.length === 0) {
-      const homeTab = createNewTab();
-      setTabs([homeTab]);
-      setActiveTabId(homeTab.id);
-      return;
-    }
-    
-    // If the closed tab was the active one, decide on the next active tab
-    if (activeTabId === tabId) {
-        // If the closed tab was the last one, activate the one before it
-        // Otherwise, activate the one at the same index (which is the one after the closed one)
-        const newActiveIndex = tabIndex >= newTabs.length ? newTabs.length - 1 : tabIndex;
+      if (newTabs.length === 0) {
+        const homeTab = createNewTab();
+        setActiveTabId(homeTab.id);
+        return [homeTab];
+      }
+      
+      if (activeTabId === tabId) {
+        const newActiveIndex = Math.max(0, tabIndex - 1);
         setActiveTabId(newTabs[newActiveIndex].id);
-    }
-    
-    // Set the new state for the tabs
-    setTabs(newTabs);
+      }
+      
+      return newTabs;
+    });
   };
 
   const setActiveTab = (tabId: string) => {
