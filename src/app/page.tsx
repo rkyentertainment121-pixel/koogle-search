@@ -65,13 +65,16 @@ function ViewPage() {
         <div className="flex flex-col min-h-screen">
             <main className="flex-1 flex flex-col items-center justify-center p-4 md:p-8">
                 <div className="w-full flex flex-col items-center gap-8">
-                <h1 className="text-5xl md:text-7xl font-bold font-headline text-center tracking-tighter">
-                    Koogle Search
-                </h1>
-                <div className="w-full">
-                  <SearchBar />
-                </div>
-                <ShortcutGrid />
+                  <div className="text-center">
+                    <h1 className="text-5xl md:text-7xl font-bold font-headline tracking-tighter">
+                        Koogle Search
+                    </h1>
+                    <p className="text-muted-foreground mt-2">The Web With Style -- By Kenz Media</p>
+                  </div>
+                  <div className="w-full max-w-2xl">
+                    <SearchBar />
+                  </div>
+                  <ShortcutGrid />
                 </div>
             </main>
             <PrivacyStats />
@@ -82,11 +85,11 @@ function ViewPage() {
   if (isSearch) {
     return (
        <main className="flex-1 overflow-y-auto w-full">
-        <div>
+        <div className="w-full">
             <Suspense fallback={<Skeleton className="h-20 w-full" />}>
               <div className="p-4"><SearchBar initialQuery={query} showProgressBar={true} /></div>
             </Suspense>
-            <div>
+            <div className="px-4 md:px-6">
                 <Suspense fallback={
                     <div className="space-y-4 pt-4">
                         {Array.from({ length: 5 }).map((_, i) => (
