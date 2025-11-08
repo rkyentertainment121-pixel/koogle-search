@@ -69,7 +69,7 @@ function ViewPage() {
                     <h1 className="text-5xl md:text-7xl font-bold font-headline tracking-tighter">
                         Koogle Search
                     </h1>
-                    <p className="text-muted-foreground mt-2">The Web With Style -- By Kenz Media</p>
+                    <p className="text-muted-foreground mt-4">The Web With Style -- By Kenz Media</p>
                   </div>
                   <div className="w-full max-w-2xl">
                     <SearchBar />
@@ -85,27 +85,21 @@ function ViewPage() {
   if (isSearch) {
     return (
        <main className="flex-1 overflow-y-auto w-full">
-        <div className="w-full">
-            <Suspense fallback={<Skeleton className="h-20 w-full" />}>
-              <div className="p-4"><SearchBar initialQuery={query} showProgressBar={true} /></div>
-            </Suspense>
-            <div className="px-4 md:px-6">
-                <Suspense fallback={
-                    <div className="space-y-4 pt-4">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                            <div key={i} className="flex flex-col space-y-3">
-                                <Skeleton className="h-4 w-48" />
-                                <Skeleton className="h-5 w-80" />
-                                <Skeleton className="h-4 w-full" />
-                                <Skeleton className="h-4 w-3/4" />
-                            </div>
-                        ))}
+        <div className="p-4"><SearchBar initialQuery={query} showProgressBar={true} /></div>
+        <Suspense fallback={
+            <div className="space-y-4 pt-4">
+                {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="flex flex-col space-y-3">
+                        <Skeleton className="h-4 w-48" />
+                        <Skeleton className="h-5 w-80" />
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-3/4" />
                     </div>
-                }>
-                    <SearchResultsList query={query} />
-                </Suspense>
+                ))}
             </div>
-        </div>
+        }>
+            <SearchResultsList query={query} />
+        </Suspense>
       </main>
     )
   }
