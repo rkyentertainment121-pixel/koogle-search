@@ -1,3 +1,4 @@
+
 'use client';
 
 import Header from "@/components/koogle/header";
@@ -56,9 +57,32 @@ function ViewPage() {
     }
   };
 
-  const isNewTab = currentUrl === 'koogle:newtab';
-  const isSearch = currentUrl?.startsWith('koogle:search?q=');
-  const query = isSearch ? decodeURIComponent(currentUrl.split('?q=')[1] || '') : '';
+  if (!activeTab) {
+    return (
+       <div className="flex flex-col min-h-screen">
+            <main className="flex-1 flex flex-col items-center justify-center p-4 md:p-8">
+                <div className="w-full flex flex-col items-center gap-8">
+                  <div className="text-center">
+                    <h1 className="text-5xl md:text-7xl font-bold font-headline tracking-tighter">
+                        Koogle
+                    </h1>
+                    <p className="text-muted-foreground mt-8">Search the Web With Style -- By Kenz Media</p>
+                  </div>
+                  <div className="w-full max-w-2xl">
+                    <SearchBar />
+                  </div>
+                  <ShortcutGrid />
+                </div>
+            </main>
+            <PrivacyStats />
+        </div>
+    )
+  }
+
+  const isNewTab = activeTab.url === 'koogle:newtab';
+  const isSearch = activeTab.url?.startsWith('koogle:search?q=');
+  const query = isSearch ? decodeURIComponent(activeTab.url.split('?q=')[1].split('&')[0] || '') : '';
+
 
   if (isNewTab) {
     return (
@@ -104,11 +128,11 @@ function ViewPage() {
     )
   }
   
-  if (currentUrl) {
+  if (activeTab.url) {
     return (
         <div className="w-full h-full flex flex-col">
             <Suspense fallback={<Skeleton className="w-full h-full" />}>
-                <IframeView url={currentUrl} onTitleLoad={handleTitleLoad} />
+                <IframeView url={activeTab.url} onTitleLoad={handleTitleLoad} />
             </Suspense>
         </div>
     );

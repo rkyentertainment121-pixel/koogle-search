@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Mic, Search, X, Loader2 } from 'lucide-react';
@@ -8,31 +9,11 @@ import { getSuggestions } from '@/lib/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import type { SearchEngine } from '@/lib/types';
 import { Progress } from '@/components/ui/progress';
 import { TabsContext } from '../providers/tabs-provider';
-
-const searchEngines: {
-  name: SearchEngine;
-  label: string;
-  url?: string;
-}[] = [
-  { name: 'koogle', label: 'Koogle' },
-  { name: 'google', label: 'Google', url: 'https://www.google.com/search?q=' },
-  { name: 'bing', label: 'Bing', url: 'https://www.bing.com/search?q=' },
-  { name: 'yahoo', label: 'Yahoo', url: 'https://search.yahoo.com/search?p=' },
-  { name: 'duckduckgo', label: 'DuckDuckGo', url: 'https://duckduckgo.com/?q=' },
-];
+import { searchEngines } from '@/lib/search-engines';
 
 type SearchBarProps = {
   initialQuery?: string;
@@ -41,9 +22,8 @@ type SearchBarProps = {
 
 export default function SearchBar({ initialQuery = '', showProgressBar = false }: SearchBarProps) {
   const router = useRouter();
-  const { addTab } = useContext(TabsContext);
+  const { addTab, searchEngine } = useContext(TabsContext);
   const [query, setQuery] = useState(initialQuery);
-  const [selectedEngine, setSelectedEngine] = useState<SearchEngine>('koogle');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isSuggestionsVisible, setSuggestionsVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -62,13 +42,6 @@ export default function SearchBar({ initialQuery = '', showProgressBar = false }
   }, [initialQuery]);
 
   useEffect(() => {
-    const savedEngine = localStorage.getItem('searchEngine') as SearchEngine;
-    if (savedEngine && searchEngines.some((e) => e.name === savedEngine)) {
-      setSelectedEngine(savedEngine);
-    }
-  }, []);
-
-  useEffect(() => {
     if (typeof window !== 'undefined') {
       const SpeechRecognition =
         window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -83,7 +56,7 @@ export default function SearchBar({ initialQuery = '', showProgressBar = false }
         recognition.onresult = (event: any) => {
           const speechResult = event.results[0][0].transcript;
           setQuery(speechResult);
-          handleSearch(speechResult, selectedEngine);
+          handleSearch(speechResult, searchEngine);
         };
 
         recognition.onerror = (event: any) => {
@@ -100,7 +73,7 @@ export default function SearchBar({ initialQuery = '', showProgressBar = false }
         };
       }
     }
-  }, [toast, selectedEngine]);
+  }, [toast, searchEngine]);
 
   const fetchSuggestions = useCallback(async (searchQuery: string) => {
     if (searchQuery.length > 1) {
@@ -164,15 +137,6 @@ export default function SearchBar({ initialQuery = '', showProgressBar = false }
     }
   }, [showProgressBar, query]);
 
-  const handleEngineChange = (engine: SearchEngine) => {
-    setSelectedEngine(engine);
-    localStorage.setItem('searchEngine', engine);
-    setSuggestionsVisible(false);
-    if(query) {
-        handleSearch(query, engine);
-    }
-  };
-
   const handleSearch = (searchQuery: string, engineName: SearchEngine) => {
     if (searchQuery.trim() === '') return;
     setSuggestionsVisible(false);
@@ -184,14 +148,14 @@ export default function SearchBar({ initialQuery = '', showProgressBar = false }
       url = engineData.url + encodeURIComponent(searchQuery.trim());
     } else {
       // Koogle search
-      url = `koogle:search?q=${encodeURIComponent(searchQuery.trim())}`;
+      url = `koogle:search?q=${encodeURIComponent(searchQuery.trim())}&engine=${engineName}`;
     }
     addTab(url, searchQuery);
   };
 
   const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    handleSearch(query, selectedEngine);
+    handleSearch(query, searchEngine);
   };
 
   const handleVoiceSearch = () => {
@@ -216,26 +180,14 @@ export default function SearchBar({ initialQuery = '', showProgressBar = false }
     <div className="w-full relative" ref={searchBarRef}>
       <form onSubmit={handleFormSubmit} className="relative">
         <div className="relative flex items-center">
-          <Select value={selectedEngine} onValueChange={handleEngineChange}>
-            <SelectTrigger className="absolute left-3 h-10 w-28 rounded-full border-none bg-muted focus:ring-0 focus:ring-offset-0">
-              <SelectValue placeholder="Engine" />
-            </SelectTrigger>
-            <SelectContent>
-              {searchEngines.map((engine) => (
-                <SelectItem key={engine.name} value={engine.name}>
-                  {engine.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
+          <Search className="absolute left-4 h-6 w-6 text-muted-foreground" />
           <Input
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => query.length > 1 && setSuggestionsVisible(true)}
-            placeholder="Search..."
-            className="h-14 pl-36 pr-24 rounded-full text-lg shadow-lg focus-visible:ring-offset-2"
+            placeholder={`Search with ${searchEngines.find(e => e.name === searchEngine)?.label || 'Koogle'}...`}
+            className="h-14 pl-14 pr-24 rounded-full text-lg shadow-lg focus-visible:ring-offset-2"
           />
           <div className="absolute right-4 flex items-center gap-2">
             {query && (
@@ -278,7 +230,7 @@ export default function SearchBar({ initialQuery = '', showProgressBar = false }
                       className="w-full justify-start h-auto py-2 px-3 text-base"
                       onClick={() => {
                         setQuery(suggestion);
-                        handleSearch(suggestion, selectedEngine);
+                        handleSearch(suggestion, searchEngine);
                       }}
                     >
                       <Search className="h-4 w-4 mr-3 text-muted-foreground" />
@@ -301,13 +253,6 @@ export default function SearchBar({ initialQuery = '', showProgressBar = false }
 
       {showProgressBar && isSearching && (
         <Progress value={progress} className="w-full mt-2 h-1" />
-      )}
-
-      {!showProgressBar && (
-        <div className="flex items-center space-x-2 mt-4 justify-center">
-          <Switch id="private-search" />
-          <Label htmlFor="private-search">Private Search</Label>
-        </div>
       )}
     </div>
   );

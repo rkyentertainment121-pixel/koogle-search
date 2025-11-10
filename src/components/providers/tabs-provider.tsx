@@ -1,8 +1,8 @@
 
 'use client';
 
-import React, { createContext, useState, ReactNode, useEffect, useRef } from 'react';
-import type { Tab } from '@/lib/types';
+import React, { createContext, useState, ReactNode, useEffect } from 'react';
+import type { Tab, SearchEngine } from '@/lib/types';
 
 interface TabsContextType {
   tabs: Tab[];
@@ -11,6 +11,8 @@ interface TabsContextType {
   closeTab: (tabId: string) => void;
   setActiveTab: (tabId: string) => void;
   updateTabTitle: (tabId: string, title: string) => void;
+  searchEngine: SearchEngine;
+  setSearchEngine: (engine: SearchEngine) => void;
 }
 
 export const TabsContext = createContext<TabsContextType>({
@@ -20,28 +22,54 @@ export const TabsContext = createContext<TabsContextType>({
   closeTab: () => {},
   setActiveTab: () => {},
   updateTabTitle: () => {},
+  searchEngine: 'koogle',
+  setSearchEngine: () => {},
 });
 
 const createUniqueId = () => `tab-${Date.now()}-${Math.random()}`;
 
-const createNewTab = (url: string = 'koogle:newtab', title?: string): Tab => ({
-  id: createUniqueId(),
-  url: url,
-  title: title || (url === 'koogle:newtab' ? 'New Tab' : (url.startsWith('koogle:search') ? decodeURIComponent(url.split('?q=')[1]) : url)),
-});
+const createNewTab = (url: string = 'koogle:newtab', title?: string): Tab => {
+    let tabTitle = title;
+    if (!tabTitle) {
+        if (url === 'koogle:newtab') {
+            tabTitle = 'New Tab';
+        } else if (url.startsWith('koogle:search')) {
+            try {
+                tabTitle = decodeURIComponent(url.split('?q=')[1].split('&')[0]);
+            } catch (e) {
+                tabTitle = 'Search';
+            }
+        } else {
+            try {
+                tabTitle = new URL(url).hostname;
+            } catch (e) {
+                tabTitle = url;
+            }
+        }
+    }
+    return {
+        id: createUniqueId(),
+        url: url,
+        title: tabTitle,
+    };
+};
 
 export const TabsProvider = ({ children }: { children: ReactNode }) => {
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
+  const [searchEngine, setSearchEngineState] = useState<SearchEngine>('koogle');
 
   useEffect(() => {
-    // On initial load, if there are no tabs, create one.
-    if (tabs.length === 0) {
-      const homeTab = createNewTab();
-      setTabs([homeTab]);
-      setActiveTabId(homeTab.id);
+    const savedEngine = localStorage.getItem('searchEngine') as SearchEngine;
+    if (savedEngine) {
+      setSearchEngineState(savedEngine);
     }
-  }, []); // Runs only once on mount
+    
+    // On initial load, if there are no tabs, create one.
+    const initialTab = createNewTab();
+    setTabs([initialTab]);
+    setActiveTabId(initialTab.id);
+  }, []);
 
   const addTab = (url: string, title?: string) => {
     const newTab = createNewTab(url, title);
@@ -50,42 +78,25 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const closeTab = (tabId: string) => {
-    const tabIndex = tabs.findIndex(tab => tab.id === tabId);
-    if (tabIndex === -1) return;
+    setTabs(prevTabs => {
+      const tabIndex = prevTabs.findIndex(tab => tab.id === tabId);
+      if (tabIndex === -1) return prevTabs;
 
-    let newActiveTabId = activeTabId;
+      const newTabs = prevTabs.filter(tab => tab.id !== tabId);
 
-    if (activeTabId === tabId) {
-      if (tabs.length > 1) {
-        newActiveTabId = tabs[tabIndex > 0 ? tabIndex - 1 : 0].id;
-        if(newActiveTabId === tabId && tabs.length > 1) { // if the next tab is the one we are closing
-            newActiveTabId = tabs[tabIndex + 1] ? tabs[tabIndex + 1].id : tabs[0].id;
-        } else if (newActiveTabId === tabId && tabs.length === 1) { // last tab case
-            newActiveTabId = null;
-        } else if (tabIndex === 0 && tabs.length > 1) {
-            newActiveTabId = tabs[1].id;
-        }
-      } else {
-        newActiveTabId = null;
+      if (newTabs.length === 0) {
+        const homeTab = createNewTab();
+        setActiveTabId(homeTab.id);
+        return [homeTab];
       }
-    }
-    
-    const newTabs = tabs.filter(tab => tab.id !== tabId);
 
-    if (newTabs.length === 0) {
-      const homeTab = createNewTab();
-      setTabs([homeTab]);
-      setActiveTabId(homeTab.id);
-    } else {
-      setTabs(newTabs);
-      // If the active tab was closed, we need to make sure the new active tab is correct
       if (activeTabId === tabId) {
-          const newActiveIndex = Math.max(0, tabIndex - 1);
-          setActiveTabId(newTabs[newActiveIndex].id);
-      } else {
-          setActiveTabId(activeTabId);
+        const newActiveIndex = Math.max(0, tabIndex - 1);
+        setActiveTabId(newTabs[newActiveIndex].id);
       }
-    }
+
+      return newTabs;
+    });
   };
 
   const setActiveTab = (tabId: string) => {
@@ -101,6 +112,11 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
       )
     );
   };
+
+  const setSearchEngine = (engine: SearchEngine) => {
+    setSearchEngineState(engine);
+    localStorage.setItem('searchEngine', engine);
+  };
   
   const activeTab = tabs.find(t => t.id === activeTabId) || null;
 
@@ -110,7 +126,9 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
     addTab,
     closeTab,
     setActiveTab,
-    updateTabTitle
+    updateTabTitle,
+    searchEngine,
+    setSearchEngine,
   };
 
   return <TabsContext.Provider value={value}>{children}</TabsContext.Provider>;
