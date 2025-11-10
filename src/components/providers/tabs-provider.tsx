@@ -33,17 +33,15 @@ const createNewTab = (url: string = 'koogle:newtab', title?: string): Tab => ({
 export const TabsProvider = ({ children }: { children: ReactNode }) => {
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
-  const isInitialMount = useRef(true);
 
   useEffect(() => {
-    if (isInitialMount.current && tabs.length === 0) {
+    // On initial load, if there are no tabs, create one.
+    if (tabs.length === 0) {
       const homeTab = createNewTab();
       setTabs([homeTab]);
       setActiveTabId(homeTab.id);
-      isInitialMount.current = false;
     }
-  }, [tabs.length]);
-  
+  }, []); // Runs only once on mount
 
   const addTab = (url: string, title?: string) => {
     const newTab = createNewTab(url, title);
@@ -55,20 +53,24 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
     const tabIndex = tabs.findIndex(tab => tab.id === tabId);
     if (tabIndex === -1) return;
 
-    let newActiveTabId: string | null = null;
-    const newTabs = tabs.filter(tab => tab.id !== tabId);
+    let newActiveTabId = activeTabId;
 
-    if (newTabs.length > 0) {
-        if (activeTabId === tabId) {
-            if (tabIndex > 0) {
-                newActiveTabId = newTabs[tabIndex - 1].id;
-            } else {
-                newActiveTabId = newTabs[0].id;
-            }
-        } else {
-            newActiveTabId = activeTabId;
+    if (activeTabId === tabId) {
+      if (tabs.length > 1) {
+        newActiveTabId = tabs[tabIndex > 0 ? tabIndex - 1 : 0].id;
+        if(newActiveTabId === tabId && tabs.length > 1) { // if the next tab is the one we are closing
+            newActiveTabId = tabs[tabIndex + 1] ? tabs[tabIndex + 1].id : tabs[0].id;
+        } else if (newActiveTabId === tabId && tabs.length === 1) { // last tab case
+            newActiveTabId = null;
+        } else if (tabIndex === 0 && tabs.length > 1) {
+            newActiveTabId = tabs[1].id;
         }
+      } else {
+        newActiveTabId = null;
+      }
     }
+    
+    const newTabs = tabs.filter(tab => tab.id !== tabId);
 
     if (newTabs.length === 0) {
       const homeTab = createNewTab();
@@ -76,7 +78,13 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
       setActiveTabId(homeTab.id);
     } else {
       setTabs(newTabs);
-      setActiveTabId(newActiveTabId);
+      // If the active tab was closed, we need to make sure the new active tab is correct
+      if (activeTabId === tabId) {
+          const newActiveIndex = Math.max(0, tabIndex - 1);
+          setActiveTabId(newTabs[newActiveIndex].id);
+      } else {
+          setActiveTabId(activeTabId);
+      }
     }
   };
 
