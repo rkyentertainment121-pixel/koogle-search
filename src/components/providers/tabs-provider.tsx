@@ -59,25 +59,37 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const closeTab = (tabId: string) => {
-    setTabs(prevTabs => {
-      const tabIndex = prevTabs.findIndex(tab => tab.id === tabId);
-      if (tabIndex === -1) return prevTabs;
+    const tabIndex = tabs.findIndex(tab => tab.id === tabId);
+    if (tabIndex === -1) return;
 
-      const newTabs = prevTabs.filter(tab => tab.id !== tabId);
-
-      if (newTabs.length === 0) {
-        const homeTab = createNewTab();
-        setActiveTabId(homeTab.id);
-        return [homeTab];
-      }
-
-      if (activeTabId === tabId) {
+    let newActiveTabId = activeTabId;
+    
+    // If the closed tab was the active tab, decide the next active tab
+    if (activeTabId === tabId) {
+      if (tabs.length > 1) {
+        // New active tab will be the one to the left, or the new first tab if the first was closed
         const newActiveIndex = Math.max(0, tabIndex - 1);
-        setActiveTabId(newTabs[newActiveIndex].id);
+        newActiveTabId = tabs.filter(t => t.id !== tabId)[newActiveIndex]?.id;
+      } else {
+        newActiveTabId = null;
       }
-      
-      return newTabs;
-    });
+    }
+    
+    const newTabs = tabs.filter(tab => tab.id !== tabId);
+
+    if (newTabs.length === 0) {
+      const homeTab = createNewTab();
+      setTabs([homeTab]);
+      setActiveTabId(homeTab.id);
+    } else {
+      setTabs(newTabs);
+      if (newActiveTabId) {
+        setActiveTabId(newActiveTabId);
+      } else if (newTabs.length > 0 && !newTabs.find(t => t.id === activeTabId)) {
+        // Fallback if active tab was removed but not handled above
+        setActiveTabId(newTabs[0].id);
+      }
+    }
   };
 
   const setActiveTab = (tabId: string) => {
