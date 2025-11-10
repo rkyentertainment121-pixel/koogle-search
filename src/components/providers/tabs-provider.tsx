@@ -69,13 +69,17 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
         newTabs = [homeTab];
         setTabs(newTabs);
         setActiveTabId(homeTab.id);
-    } else {
-        if (activeTabId === tabId) {
-            const newActiveIndex = Math.max(0, tabIndex - 1);
-            setActiveTabId(newTabs[newActiveIndex].id);
-        }
-        setTabs(newTabs);
+        return; // Exit after creating the new home tab
     }
+    
+    if (activeTabId === tabId) {
+        // The closed tab was active. Make the tab to the left active.
+        // If the first tab was closed, make the new first tab active.
+        const newActiveIndex = Math.max(0, tabIndex - 1);
+        setActiveTabId(newTabs[newActiveIndex].id);
+    }
+    
+    setTabs(newTabs);
   };
 
   const setActiveTab = (tabId: string) => {
