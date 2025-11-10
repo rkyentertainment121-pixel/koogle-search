@@ -59,27 +59,25 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const closeTab = (tabId: string) => {
-    const tabIndex = tabs.findIndex(tab => tab.id === tabId);
-    if (tabIndex === -1) return;
+    setTabs(prevTabs => {
+      const tabIndex = prevTabs.findIndex(tab => tab.id === tabId);
+      if (tabIndex === -1) return prevTabs;
 
-    let newTabs = tabs.filter(tab => tab.id !== tabId);
+      const newTabs = prevTabs.filter(tab => tab.id !== tabId);
 
-    if (newTabs.length === 0) {
+      if (newTabs.length === 0) {
         const homeTab = createNewTab();
-        newTabs = [homeTab];
-        setTabs(newTabs);
         setActiveTabId(homeTab.id);
-        return; // Exit after creating the new home tab
-    }
-    
-    if (activeTabId === tabId) {
-        // The closed tab was active. Make the tab to the left active.
-        // If the first tab was closed, make the new first tab active.
+        return [homeTab];
+      }
+
+      if (activeTabId === tabId) {
         const newActiveIndex = Math.max(0, tabIndex - 1);
         setActiveTabId(newTabs[newActiveIndex].id);
-    }
-    
-    setTabs(newTabs);
+      }
+      
+      return newTabs;
+    });
   };
 
   const setActiveTab = (tabId: string) => {
