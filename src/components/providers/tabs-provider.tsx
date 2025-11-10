@@ -59,25 +59,22 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const closeTab = (tabId: string) => {
-    setTabs(prevTabs => {
-      const tabIndex = prevTabs.findIndex(tab => tab.id === tabId);
-      if (tabIndex === -1) return prevTabs;
+    const tabIndex = tabs.findIndex(tab => tab.id === tabId);
+    if (tabIndex === -1) return;
 
-      const newTabs = prevTabs.filter(tab => tab.id !== tabId);
+    const newTabs = tabs.filter(tab => tab.id !== tabId);
 
-      if (newTabs.length === 0) {
-        const homeTab = createNewTab();
-        setActiveTabId(homeTab.id);
-        return [homeTab];
-      }
-      
+    if (newTabs.length === 0) {
+      const homeTab = createNewTab();
+      setTabs([homeTab]);
+      setActiveTabId(homeTab.id);
+    } else {
       if (activeTabId === tabId) {
         const newActiveIndex = Math.max(0, tabIndex - 1);
         setActiveTabId(newTabs[newActiveIndex].id);
       }
-      
-      return newTabs;
-    });
+      setTabs(newTabs);
+    }
   };
 
   const setActiveTab = (tabId: string) => {
