@@ -11,8 +11,8 @@ interface TabsContextType {
   closeTab: (tabId: string) => void;
   setActiveTab: (tabId: string) => void;
   updateTabTitle: (tabId: string, title: string) => void;
-  defaultSearchEngine: SearchEngine;
-  setDefaultSearchEngine: (engine: SearchEngine) => void;
+  searchEngine: SearchEngine;
+  setSearchEngine: (engine: SearchEngine) => void;
 }
 
 export const TabsContext = createContext<TabsContextType>({
@@ -22,8 +22,8 @@ export const TabsContext = createContext<TabsContextType>({
   closeTab: () => {},
   setActiveTab: () => {},
   updateTabTitle: () => {},
-  defaultSearchEngine: 'koogle',
-  setDefaultSearchEngine: () => {},
+  searchEngine: 'koogle',
+  setSearchEngine: () => {},
 });
 
 const createUniqueId = () => `tab-${Date.now()}-${Math.random()}`;
@@ -57,12 +57,12 @@ const createNewTab = (url: string = 'koogle:newtab', title?: string): Tab => {
 export const TabsProvider = ({ children }: { children: ReactNode }) => {
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
-  const [defaultSearchEngine, setDefaultSearchEngineState] = useState<SearchEngine>('koogle');
+  const [searchEngine, setSearchEngineState] = useState<SearchEngine>('koogle');
 
   useEffect(() => {
     const savedEngine = localStorage.getItem('searchEngine') as SearchEngine;
     if (savedEngine) {
-      setDefaultSearchEngineState(savedEngine);
+      setSearchEngineState(savedEngine);
     }
     
     // On initial load, if there are no tabs, create one.
@@ -71,6 +71,8 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
       setTabs([initialTab]);
       setActiveTabId(initialTab.id);
     }
+    // This effect should only run once on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const addTab = (url: string, title?: string) => {
@@ -93,10 +95,12 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
     }
 
     if (activeTabId === tabId) {
+      // If the closed tab was active, set the new active tab.
+      // Prioritize the tab to the left, otherwise the new first tab.
       const newActiveIndex = Math.max(0, tabIndex - 1);
       setActiveTabId(newTabs[newActiveIndex].id);
     }
-
+    
     setTabs(newTabs);
   };
 
@@ -114,8 +118,8 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
-  const setDefaultSearchEngine = (engine: SearchEngine) => {
-    setDefaultSearchEngineState(engine);
+  const setSearchEngine = (engine: SearchEngine) => {
+    setSearchEngineState(engine);
     localStorage.setItem('searchEngine', engine);
   };
   
@@ -128,8 +132,8 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
     closeTab,
     setActiveTab,
     updateTabTitle,
-    defaultSearchEngine,
-    setDefaultSearchEngine,
+    searchEngine,
+    setSearchEngine,
   };
 
   return <TabsContext.Provider value={value}>{children}</TabsContext.Provider>;
